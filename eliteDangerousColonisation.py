@@ -19,6 +19,7 @@ def setUpLogfile(directory):
         for name in files:
             if name.endswith(ext):
                 logFileList.append(os.path.join(path, name))
+    print("Logfiles: ",logFileList)
     return logFileList.sort()
 
 
@@ -121,7 +122,7 @@ def findUniqueEntries (eventList, uniqueId):
     data = []
     uniqueIDs = []
     for logfile in logFileList:
-        with open(logfile) as f:
+        with open(logfile, "r", encoding='iso-8859-1') as f:
             for line in f:
                 rawLine = json.loads(line)
                 if "MarketID" in rawLine and "StationName" in rawLine: 
