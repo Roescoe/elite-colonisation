@@ -4,16 +4,19 @@ import json
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import *
 
-folderdir = ''
- 
-ext = ('.log')
+
 logFileList = []
- 
-for path, dirc, files in os.walk(folderdir):
-    for name in files:
-        if name.endswith(ext):
-            logFileList.append(os.path.join(path, name))
-logFileList.sort()
+data = []
+
+def setUpLogfile(directory):
+    folderdir = directory
+    ext = ('.log')
+     
+    for path, dirc, files in os.walk(folderdir):
+        for name in files:
+            if name.endswith(ext):
+                logFileList.append(os.path.join(path, name))
+    return logFileList.sort()
 
 def setUpWindow():
     print("setting up window")
@@ -21,29 +24,31 @@ def setUpWindow():
     window = QWidget()
     window.setWindowTitle("Roescoe's Elite Colonisation App")
     window.setGeometry(100, 100, 1000, 100)
-    dialogLayout = QVBoxLayout()
-    formLayout = QFormLayout()
+    dialogLayout = QGridLayout()
+
 
     lineEdits = []
     for x in range(5):
         lineEdit = QLineEdit()
-        lineEdit.setMaxLength(120)
+        lineEdit.setMaxLength(300)
         lineEdits.append(lineEdit)
-
-    formLayout.addRow("Logfile folder (usually under Saved Games):", lineEdits[0])
+    dialogLayout.addWidget(QLabel("Logfile folder (usually under Saved Games):"), 0, 0)
+    dialogLayout.addWidget(lineEdits[0], 0, 1)
+    
     loadFolderButton = QPushButton()
     loadFolderButton.setText("Load Folder")
     formatDropdown = QComboBox()
+    dialogLayout.addWidget(loadFolderButton, 0, 3)
     formatDropdown.addItem("Audio - MP3")
     formatDropdown.addItem("Video - MP4")
-    formLayout.addWidget(formatDropdown)
+    dialogLayout.addWidget(formatDropdown)
     quitButton = QPushButton()
     quitButton.setText("Quit")
-    dialogLayout.addLayout(formLayout)
+
     dialogLayout.addWidget(quitButton)
     window.setLayout(dialogLayout)
     window.show()
-    loadFileButton.clicked.connect(lambda: quitNow())
+    loadFolderButton.clicked.connect(lambda: loadFile(lineEdits[0].text()))
     quitButton.clicked.connect(lambda: quitNow())
     sys.exit(app.exec())
     
@@ -51,9 +56,15 @@ def setUpWindow():
 def quitNow():
     sys.exit()
 
+def loadFile(directory):
+    print("loading file")
+    logFileList = setUpLogfile(directory)
+    findUniqueEntries(["ColonisationConstructionDepot"], "MarketID")
+    with open("allColonyLandings.txt", "w") as f:
+        f.write(str(data))
+
 
 def findUniqueEntries (eventList, uniqueId):
-    data = []
     uniqueIDs = []
     for logfile in logFileList:
         with open(logfile) as f:
@@ -79,17 +90,6 @@ def findUniqueEntries (eventList, uniqueId):
 #                         f.write(str(e[i]))
 #                     f.write("")
 
-
-
-def writeColonisationData(events):
-    allHits = findUniqueEntries(events, "MarketID")
-    with open("allColonyLandings.txt", "w") as f: 
-        f.write(str(allHits))
-
-events =["ColonisationConstructionDepot"]
-
-
-writeColonisationData(events)
 setUpWindow()
 
 
