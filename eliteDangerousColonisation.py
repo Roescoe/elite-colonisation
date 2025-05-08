@@ -21,6 +21,7 @@ def setUpLogfile(directory):
                 createTime.append(os.path.getctime(os.path.join(path, name)))
     logFileListSortedPairs = sorted(zip(createTime,logFileList))
     logFileListSorted = [x for _, x in logFileListSortedPairs]
+    logFileListSorted.sort(reverse = True)
     print("files*: ",logFileList)
     print("times*: ",createTime)
     print("sorts*: ",logFileListSorted)
@@ -124,7 +125,13 @@ def populateTable(self):
                     print("resource: ", resources[i]["RequiredAmount"])
                     self.resourceLayout.addWidget(QLabel(resources[i]["Name_Localised"]), startIndex, 0)
                     self.resourceLayout.addWidget(QLabel(str(resources[i]["RequiredAmount"])), startIndex, 1)
-                    self.resourceLayout.addWidget(QLabel(str(resources[i]["RequiredAmount"]-resources[i]["ProvidedAmount"])), startIndex, 2)
+                    remaining = str(resources[i]["RequiredAmount"]-resources[i]["ProvidedAmount"])
+                    remainingLabel = QLabel(remaining)
+                    if (remaining == "0"):
+                        remainingLabel.setStyleSheet("background-color: green")
+                    else:
+                        remainingLabel.setStyleSheet("QLabel { color : navy; background-color : pink; }")
+                    self.resourceLayout.addWidget(remainingLabel, startIndex, 2)
                     startIndex += 1
     print("total resources: ", startIndex-2)
     self.dialogLayout.addLayout(self.resourceLayout,4,0)
@@ -142,7 +149,13 @@ def findUniqueEntries (eventList, uniqueId):
                 rawLine = json.loads(line)
                 if "MarketID" in rawLine and "StationName" in rawLine: 
                     uniqueStations[rawLine["MarketID"]] = rawLine["StationName"]
+                    # with open("allLines.txt","a") as g:
+                    #     g.write(rawLine["StationName"])
+                    #     g.write("\n")
                 if any(event in line for event in eventList):
+                    # with open("allLines.txt","a") as g:
+                    #     g.write(str(rawLine))
+                    #     g.write("\n")
                     if(rawLine.get(uniqueId) not in uniqueIDs):
                         data.append(rawLine)
                         uniqueIDs.append(rawLine.get(uniqueId))
