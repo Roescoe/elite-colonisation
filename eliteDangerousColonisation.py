@@ -6,21 +6,26 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import *
 
 
-logFileList = []
 
-uniqueStations = {}
 
 
 def setUpLogfile(directory):
     folderdir = directory
     ext = ('.log')
+    createTime = []
+    global logFileListSorted
+
      
     for path, dirc, files in os.walk(folderdir):
         for name in files:
             if name.endswith(ext):
                 logFileList.append(os.path.join(path, name))
+                createTime.append(os.path.getctime(os.path.join(path, name)))
+    logFileListSortedPairs = sorted(zip(createTime,logFileList))
+    logFileListSorted = [x for _, x in logFileListSortedPairs]
     
-    return logFileList.sort()
+    return logFileListSorted
+
 
 
 class MainWindow(QDialog):
@@ -66,8 +71,8 @@ class MainWindow(QDialog):
         quitButton.clicked.connect(lambda: quitNow())
 
 def loadFile(self, directory):
-    print("loading file")
-    logFileList = setUpLogfile(directory)
+    print("loading files")
+    logFileListSorted = setUpLogfile(directory)
     data = findUniqueEntries(["ColonisationConstructionDepot"], "MarketID")
     with open("settings.txt", "w") as s:
         s.write("Folder_location: ")
@@ -121,7 +126,7 @@ def quitNow():
 def findUniqueEntries (eventList, uniqueId):
     data = []
     uniqueIDs = []
-    for logfile in logFileList:
+    for logfile in logFileListSorted:
         with open(logfile, "r", encoding='iso-8859-1') as f:
             for line in f:
                 rawLine = json.loads(line)
@@ -131,7 +136,6 @@ def findUniqueEntries (eventList, uniqueId):
                     if(rawLine.get(uniqueId) not in uniqueIDs):
                         data.append(rawLine)
                         uniqueIDs.append(rawLine.get(uniqueId))
-                        print(rawLine.get(uniqueId))
 
     for key in list(uniqueStations.keys()):
         if key not in uniqueIDs:
@@ -144,6 +148,9 @@ def findUniqueEntries (eventList, uniqueId):
     return data
 
 if __name__ == '__main__':
+    
+    logFileList = []
+    uniqueStations = {}
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
