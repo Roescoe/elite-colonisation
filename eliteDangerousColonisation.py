@@ -19,7 +19,7 @@ def setUpLogfile(directory):
         for name in files:
             if name.endswith(ext):
                 logFileList.append(os.path.join(path, name))
-    print("Logfiles: ",logFileList)
+    
     return logFileList.sort()
 
 
