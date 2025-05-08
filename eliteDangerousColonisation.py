@@ -23,7 +23,9 @@ def setUpLogfile(directory):
                 createTime.append(os.path.getctime(os.path.join(path, name)))
     logFileListSortedPairs = sorted(zip(createTime,logFileList))
     logFileListSorted = [x for _, x in logFileListSortedPairs]
-    
+    print("files*: ",logFileList)
+    print("times*: ",createTime)
+    print("sorts*: ",logFileListSorted)
     return logFileListSorted
 
 
