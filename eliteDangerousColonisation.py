@@ -5,9 +5,7 @@ import ast
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import *
 
-
-
-
+populated = False
 
 def setUpLogfile(directory):
     folderdir = directory
@@ -28,8 +26,6 @@ def setUpLogfile(directory):
     print("sorts*: ",logFileListSorted)
     return logFileListSorted
 
-
-
 class MainWindow(QDialog):
     def __init__(self):
         super().__init__()
@@ -38,6 +34,7 @@ class MainWindow(QDialog):
         self.setWindowTitle("Roescoe's Elite Colonisation App")
         self.setGeometry(100, 100, 1000, 100)
         self.dialogLayout = QGridLayout()
+        self.resourceLayout = QGridLayout()
 
 
         lineEdits = []
@@ -91,8 +88,9 @@ def loadFile(self, directory):
     self.setLayout(self.dialogLayout)
 
 def populateTable(self):
+    global populated
     print("Populating table:")
-    startIndex = 5
+    startIndex = 2
     projectID = -1
 
     currentSelectedProjectName = self.projectDropdown.currentText()
@@ -100,9 +98,19 @@ def populateTable(self):
     projectID = [key for key, val in uniqueStations.items() if val == currentSelectedProjectName]
     print("project ID: ", projectID)
     print("project name: ", self.projectDropdown.currentText())
-    self.dialogLayout.addWidget(QLabel("Resource"), 4, 0)
-    self.dialogLayout.addWidget(QLabel("Total Need"), 4, 1)
-    self.dialogLayout.addWidget(QLabel("Current Need"), 4, 2)
+    
+    
+    # print("Populated: ",populated)
+    if populated:
+        while self.resourceLayout.count():
+            item = self.resourceLayout.itemAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater() 
+            self.resourceLayout.removeItem(item)
+    self.resourceLayout.addWidget(QLabel("Resource"), 1, 0)
+    self.resourceLayout.addWidget(QLabel("Total Need"), 1, 1)
+    self.resourceLayout.addWidget(QLabel("Current Need"), 1, 2)
     with open("allColonyLandings.txt", "r") as f:
         for line in f:
             testFileLine = ast.literal_eval(line)
@@ -114,16 +122,16 @@ def populateTable(self):
                     print("type? ", type(resources))
                     print("resource: ", resources[i]["Name_Localised"])
                     print("resource: ", resources[i]["RequiredAmount"])
-                    self.dialogLayout.addWidget(QLabel(resources[i]["Name_Localised"]), startIndex, 0)
-                    self.dialogLayout.addWidget(QLabel(str(resources[i]["RequiredAmount"])), startIndex, 1)
-                    self.dialogLayout.addWidget(QLabel(str(resources[i]["RequiredAmount"]-resources[i]["ProvidedAmount"])), startIndex, 2)
+                    self.resourceLayout.addWidget(QLabel(resources[i]["Name_Localised"]), startIndex, 0)
+                    self.resourceLayout.addWidget(QLabel(str(resources[i]["RequiredAmount"])), startIndex, 1)
+                    self.resourceLayout.addWidget(QLabel(str(resources[i]["RequiredAmount"]-resources[i]["ProvidedAmount"])), startIndex, 2)
                     startIndex += 1
-    print("total resources: ", startIndex-3)
-    self.setLayout(self.dialogLayout)
+    print("total resources: ", startIndex-2)
+    self.dialogLayout.addLayout(self.resourceLayout,4,0)
+    populated = True
 
 def quitNow():
     sys.exit()
-
 
 def findUniqueEntries (eventList, uniqueId):
     data = []
@@ -142,24 +150,15 @@ def findUniqueEntries (eventList, uniqueId):
     for key in list(uniqueStations.keys()):
         if key not in uniqueIDs:
             del uniqueStations[key]
-
-
     print("ids: ", uniqueIDs)
     print("Stations: ", uniqueStations.keys())
-
     return data
 
 if __name__ == '__main__':
-    
+
     logFileList = []
     uniqueStations = {}
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
-# setUpWindow()
-
-
-
-
-
