@@ -113,12 +113,12 @@ class MainWindow(QDialog):
         
 
         self.dialogLayout.addWidget(folderLoad, 1, 0)
-        self.dialogLayout.addWidget(loadDateText,1,1)
-        self.dialogLayout.addWidget(self.loadDate,1,2)
-        self.dialogLayout.addWidget(loadFolderButton, 1, 3)
+        self.dialogLayout.addWidget(loadDateText,2,0)
+        self.dialogLayout.addWidget(self.loadDate,2,1)
+        self.dialogLayout.addWidget(loadFolderButton, 1, 1)
         
         
-        self.dialogLayout.addWidget(quitButton, 100, 0)
+        self.dialogLayout.addWidget(quitButton, 100, 1)
         self.setLayout(self.dialogLayout)
         
         loadFolderButton.clicked.connect(lambda: loadFile(self, lineEdits[0].text()))
@@ -130,9 +130,9 @@ def loadFile(self, directory):
     print("loading files")
     logFileListSorted = setUpLogfile(self, directory)
     data = findUniqueEntries(["ColonisationConstructionDepot"], "MarketID")
-
-    self.dialogLayout.addWidget(self.shipLabel, 2, 2)
-    self.dialogLayout.addWidget(self.shipDropdown, 2, 3)
+    self.shipLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
+    self.dialogLayout.addWidget(self.shipLabel, 3, 0)
+    self.dialogLayout.addWidget(self.shipDropdown, 3, 1)
     # self.dialogLayout.addWidget(self.shipSelectButton, 1, 4)
     ships = []
     loadouts = findShips()
