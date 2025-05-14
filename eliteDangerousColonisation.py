@@ -107,17 +107,15 @@ class MainWindow(QDialog):
 
         self.projectDropdown = QComboBox()
         self.refreshProjectButton = QPushButton("Update")
-        
-        quitButton = QPushButton("Quit")
+        self.hideFinished = QCheckBox("Hide Finished Resources")
 
-        
+        quitButton = QPushButton("Quit")
 
         self.dialogLayout.addWidget(folderLoad, 1, 0)
         self.dialogLayout.addWidget(loadDateText,2,0)
         self.dialogLayout.addWidget(self.loadDate,2,1)
         self.dialogLayout.addWidget(loadFolderButton, 1, 1)
-        
-        
+
         self.dialogLayout.addWidget(quitButton, 100, 1)
         self.setLayout(self.dialogLayout)
         
@@ -131,9 +129,12 @@ def loadFile(self, directory):
     logFileListSorted = setUpLogfile(self, directory)
     data = findUniqueEntries(["ColonisationConstructionDepot"], "MarketID")
     self.shipLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
+
+    # self.hideFinished.setAlignment(Qt.AlignmentFlag.AlignRight)
+    # self.hideFinished.setStyleSheet("text-align: right;")
     self.dialogLayout.addWidget(self.shipLabel, 3, 0)
     self.dialogLayout.addWidget(self.shipDropdown, 3, 1)
-    # self.dialogLayout.addWidget(self.shipSelectButton, 1, 4)
+    self.dialogLayout.addWidget(self.hideFinished,4, 1)
     ships = []
     loadouts = findShips()
     for ship in loadouts:
@@ -168,6 +169,7 @@ def populateTable(self, *args):
     currentTonnage = 0
     resourceTable = []
     sortType = "none"
+    HideFinishedResources = False
 
 
     currentSelectedProjectName = self.projectDropdown.currentText()
@@ -198,15 +200,21 @@ def populateTable(self, *args):
     sortByResName = QPushButton("Sort by Resource")
     sortByResTotal = QPushButton("Sort by Total")
     sortByResNeed = QPushButton("Sort by Need")
+    
+    
     self.resourceLayout.addWidget(sortByResName,startIndex - 2, 0)
     self.resourceLayout.addWidget(sortByResTotal,startIndex - 2, 1)
     self.resourceLayout.addWidget(sortByResNeed,startIndex - 2, 2)
+    
     self.resourceLayout.addWidget(QLabel("Resource"), startIndex - 1, 0)
     self.resourceLayout.addWidget(QLabel("Total Need"), startIndex - 1, 1)
     self.resourceLayout.addWidget(QLabel("Current Need"), startIndex - 1, 2)
     line = QFrame()
     line.setFrameShape(QFrame.Shape.HLine)
     self.resourceLayout.addWidget(line, startIndex, 0, 1, 20)
+
+
+
     with open("allColonyLandings.txt", "r") as f:
         for line in f:
             testFileLine = ast.literal_eval(line)
@@ -231,7 +239,13 @@ def populateTable(self, *args):
     percentPerTrip = str(round(currentTonnage/totalNeededResources*100,2))+"%" if currentTonnage > 0 else "No Cargo"
     printTable = copy.deepcopy(resourceTable)
 
-    if len(args) == 1:
+    if len(args) >= 2:
+        HideFinishedResources = args[1]   
+    if HideFinishedResources:
+        self.hideFinished.setChecked(True)
+        printTable = [p for p in printTable if "0" not in p]
+
+    if len(args) >= 1:
         sortType = args[0]
     if sortType == "Resource":
         printTable.sort(key = lambda x: x[0])
@@ -239,7 +253,6 @@ def populateTable(self, *args):
         printTable.sort(key = lambda y: (int(y[1]),y[0]))
     if sortType == "Need": 
         printTable.sort(key = lambda z: (int(z[2]),z[0]))
-    
 
     self.statsLayout.addWidget(QLabel("Trips Left:"), 0, 0)
     self.statsLayout.addWidget(QLabel(trips), 0, 1)
@@ -252,7 +265,6 @@ def populateTable(self, *args):
     self.statsLayout.addWidget(QLabel("Still Needed"), 2, 2)
     self.statsLayout.addWidget(QLabel(str(totalNeededResources-totalProvidedResources)), 2, 3)
 
-
     for i,(resourceName, resourceTotal, remaining) in enumerate(printTable):
         self.resourceLayout.addWidget(QLabel(resourceName), i + startIndex + 1, 0)
         self.resourceLayout.addWidget(QLabel(resourceTotal), i + startIndex + 1, 1)
@@ -264,20 +276,19 @@ def populateTable(self, *args):
         else:
             remainingLabel.setStyleSheet("QLabel { color : navy; background-color : pink; }")
         self.resourceLayout.addWidget(remainingLabel, i + startIndex + 1, 2)
-
-    self.dialogLayout.addLayout(self.statsLayout,4,0)
-    self.dialogLayout.addLayout(self.resourceLayout,5,0)
+        
+    self.dialogLayout.addLayout(self.statsLayout,5, 0, 1, 3)
+    self.dialogLayout.addLayout(self.resourceLayout,6, 0, 1, 3)
     populated = True
-    sortByResName.clicked.connect(lambda: populateTable(self,"Resource"))
-    sortByResTotal.clicked.connect(lambda: populateTable(self,"Total"))
-    sortByResNeed.clicked.connect(lambda: populateTable(self,"Need"))
+
+    sortByResName.clicked.connect(lambda: populateTable(self, "Resource", self.hideFinished.isChecked()))
+    sortByResTotal.clicked.connect(lambda: populateTable(self, "Total", self.hideFinished.isChecked()))
+    sortByResNeed.clicked.connect(lambda: populateTable(self,"Need", self.hideFinished.isChecked()))
 
 def quitNow():
     sys.exit()
 
 def findUniqueEntries (eventList, uniqueId):
-    
-    
     for logfile in logFileListSorted:
         with open(logfile, "r", encoding='iso-8859-1') as f:
             for line in f:
@@ -301,8 +312,6 @@ def findUniqueEntries (eventList, uniqueId):
     return data
 
 def refreshUniqueEntries (self, eventList, uniqueId):
-
-
     logfile = logFileListSorted[0]
     lineCount = 0
     with open(logfile, "r", encoding='iso-8859-1') as f:
@@ -327,7 +336,7 @@ def refreshUniqueEntries (self, eventList, uniqueId):
     with open("allColonyLandings.txt", "w") as f:
         f.write("\n".join(map(str, data.values())))
     print("******Lines in current logfile:*******", lineCount)
-    populateTable(self)
+    populateTable(self, "Resource", self.hideFinished.isChecked())
 
 def findShips():
     #"event":"Loadout"
