@@ -59,6 +59,9 @@ class MainWindow(QDialog):
         self.dialogLayout.addWidget(loadFolderButton, 0, 2)
         self.selectProjectButton = QPushButton()
         self.projectDropdown = QComboBox()
+
+        self.refreshProjectButton = QPushButton()
+        self.refreshProjectButton.setText("Refresh")
         
         quitButton = QPushButton()
         quitButton.setText("Quit")
@@ -67,6 +70,7 @@ class MainWindow(QDialog):
         self.setLayout(self.dialogLayout)
         
         loadFolderButton.clicked.connect(lambda: loadFile(self, lineEdits[0].text()))
+        self.refreshProjectButton.clicked.connect(lambda: refreshUniqueEntries(self, ["ColonisationConstructionDepot"], "MarketID"))
         self.selectProjectButton.clicked.connect(lambda: populateTable(self))
         quitButton.clicked.connect(lambda: quitNow())
 
@@ -82,10 +86,12 @@ def loadFile(self, directory):
 
     print("Number of Stations: ",len(data))
     print("values: ",uniqueStations.values())
+    self.projectDropdown.clear()
     self.projectDropdown.addItems(uniqueStations.values())
     self.dialogLayout.addWidget(self.projectDropdown, 1, 1)
     self.selectProjectButton.setText("Select Project")
     self.dialogLayout.addWidget(self.selectProjectButton, 1, 2)
+    self.dialogLayout.addWidget(self.refreshProjectButton, 2, 2)
     self.setLayout(self.dialogLayout)
 
 def populateTable(self):
@@ -144,9 +150,8 @@ def quitNow():
     sys.exit()
 
 def findUniqueEntries (eventList, uniqueId):
-    data = {}
-    uniqueIDs = []
-    firstInstanceInFile = {} # {marketID:logfile} dictionary
+    
+    
     for logfile in logFileListSorted:
         with open(logfile, "r", encoding='iso-8859-1') as f:
             for line in f:
@@ -170,10 +175,38 @@ def findUniqueEntries (eventList, uniqueId):
     print("Stations: ", uniqueStations.keys())
     return data
 
-if __name__ == '__main__':
+def refreshUniqueEntries (self, eventList, uniqueId):
 
+    
+    logfile = logFileListSorted[0]
+    with open(logfile, "r", encoding='iso-8859-1') as f:
+        for line in f:
+            rawLine = json.loads(line)
+            if "MarketID" in rawLine and "StationName" in rawLine: 
+                uniqueStations[rawLine["MarketID"]] = rawLine["StationName"]
+            if any(event in line for event in eventList):
+                if(rawLine.get(uniqueId) not in uniqueIDs): #it's a new market ID we want
+                    print("ID is: ",rawLine.get(uniqueId))
+                    firstInstanceInFile[rawLine.get(uniqueId)] = str(logfile)
+                    uniqueIDs.append(rawLine.get(uniqueId))
+                    data[rawLine.get(uniqueId)] = rawLine
+                #only update if id and filename are still the same as first find
+                if(rawLine.get(uniqueId) in uniqueIDs and firstInstanceInFile[rawLine.get(uniqueId)] == str(logfile)):
+                    data[rawLine.get(uniqueId)] = rawLine
+
+    for key in list(uniqueStations.keys()):
+        if key not in uniqueIDs:
+            del uniqueStations[key]
+    with open("allColonyLandings.txt", "w") as f:
+        f.write("\n".join(map(str, data.values())))
+    populateTable(self)
+
+if __name__ == '__main__':
+    data = {}
+    firstInstanceInFile = {} # {marketID:logfile} dictionary
     logFileList = []
     uniqueStations = {}
+    uniqueIDs = []
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
