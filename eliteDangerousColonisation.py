@@ -2,23 +2,42 @@ import os
 import sys
 import json
 import ast
+import time
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import *
 
 populated = False
 
-def setUpLogfile(directory):
+def setUpLogfile(self, directory):
     folderdir = directory
     ext = ('.log')
     createTime = []
     global logFileListSorted
+    selectedTime = self.loadDate.currentIndex()
+    olderThanNumDays = 0
+    currentTime = time.time()
+
+    match selectedTime:
+        case 0:
+            olderThanNumDays = currentTime - 3600*24*1
+        case 1:
+            olderThanNumDays = currentTime - 3600*24*7
+        case 2:
+            olderThanNumDays = currentTime - 3600*24*30
+        case 3:
+            olderThanNumDays = currentTime - 3600*24*100
+        case 4:
+            olderThanNumDays = 0
+        case _:
+            olderThanNumDays = 0
 
      
     for path, dirc, files in os.walk(folderdir):
         for name in files:
             if name.endswith(ext):
-                logFileList.append(os.path.join(path, name))
-                createTime.append(os.path.getctime(os.path.join(path, name)))
+                if os.path.getctime(os.path.join(path, name)) >= olderThanNumDays:
+                    logFileList.append(os.path.join(path, name))
+                    createTime.append(os.path.getctime(os.path.join(path, name)))
     logFileListSortedPairs = sorted(zip(createTime,logFileList))
     logFileListSorted = [x for _, x in logFileListSortedPairs]
     logFileListSorted.sort(reverse = True)
@@ -56,7 +75,18 @@ class MainWindow(QDialog):
         loadFolderButton = QPushButton()
         loadFolderButton.setText("Load Folder")
         
-        self.dialogLayout.addWidget(loadFolderButton, 0, 2)
+        loadDateText = QLabel("Load no older than:")
+        self.loadDate = QComboBox()
+        self.loadDate.addItem("1 Day")
+        self.loadDate.addItem("1 Week")
+        self.loadDate.addItem("1 Month")
+        self.loadDate.addItem("100 Days")
+        self.loadDate.addItem("All")
+        self.loadDate.setCurrentIndex(2)
+
+        self.dialogLayout.addWidget(loadDateText,0,2)
+        self.dialogLayout.addWidget(self.loadDate,0,3)
+        self.dialogLayout.addWidget(loadFolderButton, 0, 4)
         # self.selectProjectButton = QPushButton()
         self.projectDropdown = QComboBox()
 
@@ -76,7 +106,7 @@ class MainWindow(QDialog):
 
 def loadFile(self, directory):
     print("loading files")
-    logFileListSorted = setUpLogfile(directory)
+    logFileListSorted = setUpLogfile(self, directory)
     data = findUniqueEntries(["ColonisationConstructionDepot"], "MarketID")
     with open("settings.txt", "w") as s:
         s.write("Folder_location: ")
