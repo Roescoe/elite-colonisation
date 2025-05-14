@@ -57,11 +57,11 @@ class MainWindow(QDialog):
         loadFolderButton.setText("Load Folder")
         
         self.dialogLayout.addWidget(loadFolderButton, 0, 2)
-        self.selectProjectButton = QPushButton()
+        # self.selectProjectButton = QPushButton()
         self.projectDropdown = QComboBox()
 
         self.refreshProjectButton = QPushButton()
-        self.refreshProjectButton.setText("Refresh")
+        self.refreshProjectButton.setText("Update")
         
         quitButton = QPushButton()
         quitButton.setText("Quit")
@@ -71,7 +71,7 @@ class MainWindow(QDialog):
         
         loadFolderButton.clicked.connect(lambda: loadFile(self, lineEdits[0].text()))
         self.refreshProjectButton.clicked.connect(lambda: refreshUniqueEntries(self, ["ColonisationConstructionDepot"], "MarketID"))
-        self.selectProjectButton.clicked.connect(lambda: populateTable(self))
+        # self.selectProjectButton.clicked.connect(lambda: populateTable(self))
         quitButton.clicked.connect(lambda: quitNow())
 
 def loadFile(self, directory):
@@ -89,9 +89,9 @@ def loadFile(self, directory):
     self.projectDropdown.clear()
     self.projectDropdown.addItems(uniqueStations.values())
     self.dialogLayout.addWidget(self.projectDropdown, 1, 1)
-    self.selectProjectButton.setText("Select Project")
-    self.dialogLayout.addWidget(self.selectProjectButton, 1, 2)
-    self.dialogLayout.addWidget(self.refreshProjectButton, 2, 2)
+    # self.selectProjectButton.setText("Select Project")
+    # self.dialogLayout.addWidget(self.selectProjectButton, 1, 2)
+    self.dialogLayout.addWidget(self.refreshProjectButton, 1, 2)
     self.setLayout(self.dialogLayout)
 
 def populateTable(self):
