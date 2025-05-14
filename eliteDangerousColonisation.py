@@ -4,8 +4,25 @@ import json
 import ast
 import time
 import re
+import copy
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import *
+
+# This is a tool to print out Elite Dangerous colonization data pulled from the user's logfiles
+# Copyright (C) 2025 Roescoe
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 populated = False
 
@@ -87,14 +104,13 @@ class MainWindow(QDialog):
 
         self.shipLabel = QLabel("Ship:")
         self.shipDropdown = QComboBox()
-        # self.shipSelectButton = QPushButton("Select Ship")
 
         self.projectDropdown = QComboBox()
-        self.refreshProjectButton = QPushButton()
-        self.refreshProjectButton.setText("Update")
+        self.refreshProjectButton = QPushButton("Update")
         
-        quitButton = QPushButton()
-        quitButton.setText("Quit")
+        quitButton = QPushButton("Quit")
+
+        
 
         self.dialogLayout.addWidget(folderLoad, 0, 1)
         self.dialogLayout.addWidget(loadDateText,0,2)
@@ -107,6 +123,7 @@ class MainWindow(QDialog):
         
         loadFolderButton.clicked.connect(lambda: loadFile(self, lineEdits[0].text()))
         self.refreshProjectButton.clicked.connect(lambda: refreshUniqueEntries(self, ["ColonisationConstructionDepot"], "MarketID"))
+        
         quitButton.clicked.connect(lambda: quitNow())
 
 def loadFile(self, directory):
@@ -141,14 +158,17 @@ def loadFile(self, directory):
     self.dialogLayout.addWidget(self.refreshProjectButton, 2, 2)
     self.setLayout(self.dialogLayout)
 
-def populateTable(self):
+def populateTable(self, *args):
     global populated
     print("Populating table:")
-    startIndex = 5
+    startIndex = 6
     projectID = -1
     totalProvidedResources = 0
     totalNeededResources = 0
     currentTonnage = 0
+    resourceTable = []
+    sortType = "none"
+
 
     currentSelectedProjectName = self.projectDropdown.currentText()
     
@@ -171,17 +191,25 @@ def populateTable(self):
             if widget is not None:
                 widget.deleteLater() 
             self.statsLayout.removeItem(item)
-    
-    print(" SUB1: ",self.shipDropdown.currentText().rsplit(" ",1)[1].split("T")[0])
+
     currentTonnage = int(self.shipDropdown.currentText().rsplit(" ",1)[1].split("T")[0])
-    
-    self.resourceLayout.addWidget(QLabel("Resource"), startIndex-1, 0)
-    self.resourceLayout.addWidget(QLabel("Total Need"), startIndex-1, 1)
-    self.resourceLayout.addWidget(QLabel("Current Need"), startIndex-1, 2)
+
+
+    sortByResName = QPushButton("Sort by Resource")
+    sortByResTotal = QPushButton("Sort by Total")
+    sortByResNeed = QPushButton("Sort by Need")
+    self.resourceLayout.addWidget(sortByResName,startIndex - 2, 0)
+    self.resourceLayout.addWidget(sortByResTotal,startIndex - 2, 1)
+    self.resourceLayout.addWidget(sortByResNeed,startIndex - 2, 2)
+    self.resourceLayout.addWidget(QLabel("Resource"), startIndex - 1, 0)
+    self.resourceLayout.addWidget(QLabel("Total Need"), startIndex - 1, 1)
+    self.resourceLayout.addWidget(QLabel("Current Need"), startIndex - 1, 2)
+    line = QFrame()
+    line.setFrameShape(QFrame.Shape.HLine)
+    self.resourceLayout.addWidget(line, startIndex, 0, 1, 20)
     with open("allColonyLandings.txt", "r") as f:
         for line in f:
             testFileLine = ast.literal_eval(line)
-            print("reading line: ",testFileLine)
             if testFileLine["MarketID"] == projectID[0]:
                 resources = testFileLine["ResourcesRequired"]
                 print("resources: ",resources)
@@ -190,23 +218,28 @@ def populateTable(self):
                     print("resource: ", resources[i]["Name_Localised"])
                     print("resource amount: ", resources[i]["RequiredAmount"])
                     print("resource provided: ", resources[i]["ProvidedAmount"])
-                    self.resourceLayout.addWidget(QLabel(resources[i]["Name_Localised"]), startIndex, 0)
-                    self.resourceLayout.addWidget(QLabel(str(resources[i]["RequiredAmount"])), startIndex, 1)
-                    remaining = str(resources[i]["RequiredAmount"]-resources[i]["ProvidedAmount"])
-                    remainingLabel = QLabel(remaining)
-                    if (remaining == "0"):
-                        remainingLabel.setStyleSheet("background-color: green")
-                    elif(int(remaining) == resources[i]["RequiredAmount"]):
-                        remainingLabel.setStyleSheet("QLabel { color : navy; background-color : yellow; }")
-                    else:
-                        remainingLabel.setStyleSheet("QLabel { color : navy; background-color : pink; }")
-                    self.resourceLayout.addWidget(remainingLabel, startIndex, 2)
-                    startIndex += 1
+                    resourceLabel = resources[i]["Name_Localised"]
+                    resourceAmount = str(resources[i]["RequiredAmount"])
+                    remainingLabel = str(resources[i]["RequiredAmount"]-resources[i]["ProvidedAmount"])
+                     
+                    resourceTuple = resourceLabel, resourceAmount, remainingLabel
+                    resourceTable.append(resourceTuple)
                     totalProvidedResources += resources[i]["ProvidedAmount"]
                     totalNeededResources += resources[i]["RequiredAmount"]
     trips = str(round((totalNeededResources-totalProvidedResources)/currentTonnage,1)) if currentTonnage > 0 else "No Cargo"
     percentComplete = str(round(totalProvidedResources/totalNeededResources*100,2))+"%"
     percentPerTrip = str(round(currentTonnage/totalNeededResources*100,2))+"%" if currentTonnage > 0 else "No Cargo"
+    printTable = copy.deepcopy(resourceTable)
+
+    if len(args) == 1:
+        sortType = args[0]
+    if sortType == "Resource":
+        printTable.sort(key = lambda x: x[0])
+    if sortType == "Total":    
+        printTable.sort(key = lambda y: (int(y[1]),y[0]))
+    if sortType == "Need": 
+        printTable.sort(key = lambda z: (int(z[2]),z[0]))
+    
 
     self.statsLayout.addWidget(QLabel("Trips Left:"), 0, 1)
     self.statsLayout.addWidget(QLabel(trips), 0, 2)
@@ -218,10 +251,26 @@ def populateTable(self):
     self.statsLayout.addWidget(QLabel(str(totalNeededResources)), 1, 4)
     self.statsLayout.addWidget(QLabel("Still Needed"), 3, 3)
     self.statsLayout.addWidget(QLabel(str(totalNeededResources-totalProvidedResources)), 3, 4)
-    print("total resources: ", startIndex-2)
+
+
+    for i,(resourceName, resourceTotal, remaining) in enumerate(printTable):
+        self.resourceLayout.addWidget(QLabel(resourceName), i + startIndex + 1, 0)
+        self.resourceLayout.addWidget(QLabel(resourceTotal), i + startIndex + 1, 1)
+        remainingLabel = QLabel(remaining)
+        if (remaining == "0"):
+            remainingLabel.setStyleSheet("background-color: green")
+        elif(int(remaining) == int(resourceTotal)):
+            remainingLabel.setStyleSheet("QLabel { color : navy; background-color : yellow; }")
+        else:
+            remainingLabel.setStyleSheet("QLabel { color : navy; background-color : pink; }")
+        self.resourceLayout.addWidget(remainingLabel, i + startIndex + 1, 2)
+
     self.dialogLayout.addLayout(self.statsLayout,4,1)
     self.dialogLayout.addLayout(self.resourceLayout,5,0)
     populated = True
+    sortByResName.clicked.connect(lambda: populateTable(self,"Resource"))
+    sortByResTotal.clicked.connect(lambda: populateTable(self,"Total"))
+    sortByResNeed.clicked.connect(lambda: populateTable(self,"Need"))
 
 def quitNow():
     sys.exit()
