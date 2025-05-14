@@ -207,8 +207,11 @@ def findUniqueEntries (eventList, uniqueId):
 
 def refreshUniqueEntries (self, eventList, uniqueId):
 
-    
+
     logfile = logFileListSorted[0]
+    with open("latestLogfile.txt", "a") as f:
+        f.write("\n"+logfile)
+    print("updating from: ",logfile)
     with open(logfile, "r", encoding='iso-8859-1') as f:
         for line in f:
             rawLine = json.loads(line)
