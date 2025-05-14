@@ -112,10 +112,10 @@ class MainWindow(QDialog):
 
         
 
-        self.dialogLayout.addWidget(folderLoad, 0, 1)
-        self.dialogLayout.addWidget(loadDateText,0,2)
-        self.dialogLayout.addWidget(self.loadDate,0,3)
-        self.dialogLayout.addWidget(loadFolderButton, 0, 4)
+        self.dialogLayout.addWidget(folderLoad, 1, 0)
+        self.dialogLayout.addWidget(loadDateText,1,1)
+        self.dialogLayout.addWidget(self.loadDate,1,2)
+        self.dialogLayout.addWidget(loadFolderButton, 1, 3)
         
         
         self.dialogLayout.addWidget(quitButton, 100, 0)
@@ -131,8 +131,8 @@ def loadFile(self, directory):
     logFileListSorted = setUpLogfile(self, directory)
     data = findUniqueEntries(["ColonisationConstructionDepot"], "MarketID")
 
-    self.dialogLayout.addWidget(self.shipLabel, 1, 2)
-    self.dialogLayout.addWidget(self.shipDropdown, 1, 3)
+    self.dialogLayout.addWidget(self.shipLabel, 2, 2)
+    self.dialogLayout.addWidget(self.shipDropdown, 2, 3)
     # self.dialogLayout.addWidget(self.shipSelectButton, 1, 4)
     ships = []
     loadouts = findShips()
@@ -154,14 +154,14 @@ def loadFile(self, directory):
     print("values: ",uniqueStations.values())
     self.projectDropdown.clear()
     self.projectDropdown.addItems(uniqueStations.values())
-    self.dialogLayout.addWidget(self.projectDropdown, 2, 1)
-    self.dialogLayout.addWidget(self.refreshProjectButton, 2, 2)
+    self.dialogLayout.addWidget(self.projectDropdown, 2, 0)
+    self.dialogLayout.addWidget(self.refreshProjectButton, 2, 1)
     self.setLayout(self.dialogLayout)
 
 def populateTable(self, *args):
     global populated
     print("Populating table:")
-    startIndex = 6
+    startIndex = 7
     projectID = -1
     totalProvidedResources = 0
     totalNeededResources = 0
@@ -241,16 +241,16 @@ def populateTable(self, *args):
         printTable.sort(key = lambda z: (int(z[2]),z[0]))
     
 
-    self.statsLayout.addWidget(QLabel("Trips Left:"), 0, 1)
-    self.statsLayout.addWidget(QLabel(trips), 0, 2)
-    self.statsLayout.addWidget(QLabel("Percent Complete:"), 0, 3)
-    self.statsLayout.addWidget(QLabel(percentComplete), 0, 4)
-    self.statsLayout.addWidget(QLabel("Percent per Trip:"), 1, 1)
-    self.statsLayout.addWidget(QLabel(percentPerTrip), 1, 2)
-    self.statsLayout.addWidget(QLabel("Total Materials:"), 1, 3)
-    self.statsLayout.addWidget(QLabel(str(totalNeededResources)), 1, 4)
-    self.statsLayout.addWidget(QLabel("Still Needed"), 3, 3)
-    self.statsLayout.addWidget(QLabel(str(totalNeededResources-totalProvidedResources)), 3, 4)
+    self.statsLayout.addWidget(QLabel("Trips Left:"), 0, 0)
+    self.statsLayout.addWidget(QLabel(trips), 0, 1)
+    self.statsLayout.addWidget(QLabel("Percent Complete:"), 0, 2)
+    self.statsLayout.addWidget(QLabel(percentComplete), 0, 3)
+    self.statsLayout.addWidget(QLabel("Percent per Trip:"), 1, 0)
+    self.statsLayout.addWidget(QLabel(percentPerTrip), 1, 1)
+    self.statsLayout.addWidget(QLabel("Total Materials:"), 1, 2)
+    self.statsLayout.addWidget(QLabel(str(totalNeededResources)), 1, 3)
+    self.statsLayout.addWidget(QLabel("Still Needed"), 2, 2)
+    self.statsLayout.addWidget(QLabel(str(totalNeededResources-totalProvidedResources)), 2, 3)
 
 
     for i,(resourceName, resourceTotal, remaining) in enumerate(printTable):
@@ -265,7 +265,7 @@ def populateTable(self, *args):
             remainingLabel.setStyleSheet("QLabel { color : navy; background-color : pink; }")
         self.resourceLayout.addWidget(remainingLabel, i + startIndex + 1, 2)
 
-    self.dialogLayout.addLayout(self.statsLayout,4,1)
+    self.dialogLayout.addLayout(self.statsLayout,4,0)
     self.dialogLayout.addLayout(self.resourceLayout,5,0)
     populated = True
     sortByResName.clicked.connect(lambda: populateTable(self,"Resource"))
