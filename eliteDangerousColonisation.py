@@ -56,6 +56,7 @@ class MainWindow(QDialog):
         self.setGeometry(100, 100, 1000, 100)
         self.dialogLayout = QGridLayout()
         self.resourceLayout = QGridLayout()
+        self.statsLayout = QGridLayout()
 
 
         lineEdits = []
@@ -143,7 +144,7 @@ def loadFile(self, directory):
 def populateTable(self):
     global populated
     print("Populating table:")
-    startIndex = 3
+    startIndex = 5
     projectID = -1
     totalProvidedResources = 0
     totalNeededResources = 0
@@ -164,7 +165,12 @@ def populateTable(self):
             if widget is not None:
                 widget.deleteLater() 
             self.resourceLayout.removeItem(item)
-    self.resourceLayout.addWidget(QLabel("Trips Left:"), 1, 3)
+        while self.statsLayout.count():
+            item = self.statsLayout.itemAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater() 
+            self.statsLayout.removeItem(item)
     
     print(" SUB1: ",self.shipDropdown.currentText().rsplit(" ",1)[1].split("T")[0])
     currentTonnage = int(self.shipDropdown.currentText().rsplit(" ",1)[1].split("T")[0])
@@ -198,10 +204,23 @@ def populateTable(self):
                     startIndex += 1
                     totalProvidedResources += resources[i]["ProvidedAmount"]
                     totalNeededResources += resources[i]["RequiredAmount"]
-    trips = str(round((totalNeededResources-totalProvidedResources)/currentTonnage,2)) if currentTonnage > 0 else "No Cargo"
-    self.resourceLayout.addWidget(QLabel(trips), 1, 4)
+    trips = str(round((totalNeededResources-totalProvidedResources)/currentTonnage,1)) if currentTonnage > 0 else "No Cargo"
+    percentComplete = str(round(totalProvidedResources/totalNeededResources*100,2))+"%"
+    percentPerTrip = str(round(currentTonnage/totalNeededResources*100,2))+"%" if currentTonnage > 0 else "No Cargo"
+
+    self.statsLayout.addWidget(QLabel("Trips Left:"), 0, 1)
+    self.statsLayout.addWidget(QLabel(trips), 0, 2)
+    self.statsLayout.addWidget(QLabel("Percent Complete:"), 0, 3)
+    self.statsLayout.addWidget(QLabel(percentComplete), 0, 4)
+    self.statsLayout.addWidget(QLabel("Percent per Trip:"), 1, 1)
+    self.statsLayout.addWidget(QLabel(percentPerTrip), 1, 2)
+    self.statsLayout.addWidget(QLabel("Total Materials:"), 1, 3)
+    self.statsLayout.addWidget(QLabel(str(totalNeededResources)), 1, 4)
+    self.statsLayout.addWidget(QLabel("Still Needed"), 3, 3)
+    self.statsLayout.addWidget(QLabel(str(totalNeededResources-totalProvidedResources)), 3, 4)
     print("total resources: ", startIndex-2)
-    self.dialogLayout.addLayout(self.resourceLayout,4,0)
+    self.dialogLayout.addLayout(self.statsLayout,4,1)
+    self.dialogLayout.addLayout(self.resourceLayout,5,0)
     populated = True
 
 def quitNow():
