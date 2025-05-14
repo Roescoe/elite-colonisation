@@ -3,6 +3,7 @@ import sys
 import json
 import ast
 import time
+import re
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import *
 
@@ -70,7 +71,6 @@ class MainWindow(QDialog):
                 if testFileLine.startswith("Folder_location:"):
                     folderLoad.setText(testFileLine.split("Folder_location: ",1)[1].strip())
                     print("found default folder:", testFileLine.split("Folder_location: ",1)[1].strip())
-        self.dialogLayout.addWidget(folderLoad, 0, 1)
         
         loadFolderButton = QPushButton()
         loadFolderButton.setText("Load Folder")
@@ -84,30 +84,48 @@ class MainWindow(QDialog):
         self.loadDate.addItem("All")
         self.loadDate.setCurrentIndex(2)
 
-        self.dialogLayout.addWidget(loadDateText,0,2)
-        self.dialogLayout.addWidget(self.loadDate,0,3)
-        self.dialogLayout.addWidget(loadFolderButton, 0, 4)
-        # self.selectProjectButton = QPushButton()
-        self.projectDropdown = QComboBox()
+        self.shipLabel = QLabel("Ship:")
+        self.shipDropdown = QComboBox()
+        # self.shipSelectButton = QPushButton("Select Ship")
 
+        self.projectDropdown = QComboBox()
         self.refreshProjectButton = QPushButton()
         self.refreshProjectButton.setText("Update")
         
         quitButton = QPushButton()
         quitButton.setText("Quit")
 
+        self.dialogLayout.addWidget(folderLoad, 0, 1)
+        self.dialogLayout.addWidget(loadDateText,0,2)
+        self.dialogLayout.addWidget(self.loadDate,0,3)
+        self.dialogLayout.addWidget(loadFolderButton, 0, 4)
+        
+        
         self.dialogLayout.addWidget(quitButton, 100, 0)
         self.setLayout(self.dialogLayout)
         
         loadFolderButton.clicked.connect(lambda: loadFile(self, lineEdits[0].text()))
         self.refreshProjectButton.clicked.connect(lambda: refreshUniqueEntries(self, ["ColonisationConstructionDepot"], "MarketID"))
-        # self.selectProjectButton.clicked.connect(lambda: populateTable(self))
         quitButton.clicked.connect(lambda: quitNow())
 
 def loadFile(self, directory):
     print("loading files")
     logFileListSorted = setUpLogfile(self, directory)
     data = findUniqueEntries(["ColonisationConstructionDepot"], "MarketID")
+
+    self.dialogLayout.addWidget(self.shipLabel, 1, 2)
+    self.dialogLayout.addWidget(self.shipDropdown, 1, 3)
+    # self.dialogLayout.addWidget(self.shipSelectButton, 1, 4)
+    ships = []
+    loadouts = findShips()
+    for ship in loadouts:
+        ships.append(str(ship) +": "+ str(loadouts[ship])+"T")
+    print("loadouts:", loadouts)
+    print("Type:", type(loadouts))
+    print("Ships:", ships)
+    self.shipDropdown.clear()
+    self.shipDropdown.addItems(ships)
+
     with open("settings.txt", "w") as s:
         s.write("Folder_location: ")
         s.write(directory)
@@ -118,17 +136,18 @@ def loadFile(self, directory):
     print("values: ",uniqueStations.values())
     self.projectDropdown.clear()
     self.projectDropdown.addItems(uniqueStations.values())
-    self.dialogLayout.addWidget(self.projectDropdown, 1, 1)
-    # self.selectProjectButton.setText("Select Project")
-    # self.dialogLayout.addWidget(self.selectProjectButton, 1, 2)
-    self.dialogLayout.addWidget(self.refreshProjectButton, 1, 2)
+    self.dialogLayout.addWidget(self.projectDropdown, 2, 1)
+    self.dialogLayout.addWidget(self.refreshProjectButton, 2, 2)
     self.setLayout(self.dialogLayout)
 
 def populateTable(self):
     global populated
     print("Populating table:")
-    startIndex = 2
+    startIndex = 3
     projectID = -1
+    totalProvidedResources = 0
+    totalNeededResources = 0
+    currentTonnage = 0
 
     currentSelectedProjectName = self.projectDropdown.currentText()
     
@@ -145,9 +164,14 @@ def populateTable(self):
             if widget is not None:
                 widget.deleteLater() 
             self.resourceLayout.removeItem(item)
-    self.resourceLayout.addWidget(QLabel("Resource"), 1, 0)
-    self.resourceLayout.addWidget(QLabel("Total Need"), 1, 1)
-    self.resourceLayout.addWidget(QLabel("Current Need"), 1, 2)
+    self.resourceLayout.addWidget(QLabel("Trips Left:"), 1, 3)
+    
+    print(" SUB1: ",self.shipDropdown.currentText().rsplit(" ",1)[1].split("T")[0])
+    currentTonnage = int(self.shipDropdown.currentText().rsplit(" ",1)[1].split("T")[0])
+    
+    self.resourceLayout.addWidget(QLabel("Resource"), startIndex-1, 0)
+    self.resourceLayout.addWidget(QLabel("Total Need"), startIndex-1, 1)
+    self.resourceLayout.addWidget(QLabel("Current Need"), startIndex-1, 2)
     with open("allColonyLandings.txt", "r") as f:
         for line in f:
             testFileLine = ast.literal_eval(line)
@@ -172,6 +196,10 @@ def populateTable(self):
                         remainingLabel.setStyleSheet("QLabel { color : navy; background-color : pink; }")
                     self.resourceLayout.addWidget(remainingLabel, startIndex, 2)
                     startIndex += 1
+                    totalProvidedResources += resources[i]["ProvidedAmount"]
+                    totalNeededResources += resources[i]["RequiredAmount"]
+    trips = str(round((totalNeededResources-totalProvidedResources)/currentTonnage,2)) if currentTonnage > 0 else "No Cargo"
+    self.resourceLayout.addWidget(QLabel(trips), 1, 4)
     print("total resources: ", startIndex-2)
     self.dialogLayout.addLayout(self.resourceLayout,4,0)
     populated = True
@@ -190,7 +218,6 @@ def findUniqueEntries (eventList, uniqueId):
                     uniqueStations[rawLine["MarketID"]] = rawLine["StationName"]
                 if any(event in line for event in eventList):
                     if(rawLine.get(uniqueId) not in uniqueIDs): #it's a new market ID we want
-                        print("ID is: ",rawLine.get(uniqueId))
                         firstInstanceInFile[rawLine.get(uniqueId)] = str(logfile)
                         uniqueIDs.append(rawLine.get(uniqueId))
                         data[rawLine.get(uniqueId)] = rawLine
@@ -234,7 +261,26 @@ def refreshUniqueEntries (self, eventList, uniqueId):
     print("******Lines in current logfile:*******", lineCount)
     populateTable(self)
 
+def findShips():
+    #"event":"Loadout"
+    print("Loading Ships")
+    
+    latestLoadout = {}
+
+    for logfile in logFileListSorted:
+        with open(logfile, "r", encoding='iso-8859-1') as f:
+            for line in f:
+                rawLine = json.loads(line)
+                if "ShipIdent" in rawLine and "CargoCapacity" in rawLine: 
+                    if rawLine["ShipIdent"] not in latestLoadout:
+                        latestLoadout[rawLine["ShipIdent"]] = logfile
+                        loadouts[rawLine["ShipIdent"]] = rawLine["CargoCapacity"]
+                    if rawLine["ShipIdent"] in latestLoadout and logfile == latestLoadout[rawLine["ShipIdent"]]:
+                        loadouts[rawLine["ShipIdent"]] = rawLine["CargoCapacity"]
+    return loadouts
+
 if __name__ == '__main__':
+    loadouts = {}
     data = {}
     firstInstanceInFile = {} # {marketID:logfile} dictionary
     logFileList = []
