@@ -209,11 +209,10 @@ def refreshUniqueEntries (self, eventList, uniqueId):
 
 
     logfile = logFileListSorted[0]
-    with open("latestLogfile.txt", "a") as f:
-        f.write("\n"+logfile)
-    print("updating from: ",logfile)
+    lineCount = 0
     with open(logfile, "r", encoding='iso-8859-1') as f:
         for line in f:
+            lineCount += 1
             rawLine = json.loads(line)
             if "MarketID" in rawLine and "StationName" in rawLine: 
                 uniqueStations[rawLine["MarketID"]] = rawLine["StationName"]
@@ -232,6 +231,7 @@ def refreshUniqueEntries (self, eventList, uniqueId):
             del uniqueStations[key]
     with open("allColonyLandings.txt", "w") as f:
         f.write("\n".join(map(str, data.values())))
+    print("******Lines in current logfile:*******", lineCount)
     populateTable(self)
 
 if __name__ == '__main__':
