@@ -78,9 +78,9 @@ def loadFile(self, directory):
         s.write("Folder_location: ")
         s.write(directory)
     with open("allColonyLandings.txt", "w") as f:
-        f.write("\n".join(map(str, data)))
+        f.write("\n".join(map(str, data.values())))
 
-    
+    print("Number of Stations: ",len(data))
     print("values: ",uniqueStations.values())
     self.projectDropdown.addItems(uniqueStations.values())
     self.dialogLayout.addWidget(self.projectDropdown, 1, 1)
@@ -115,20 +115,23 @@ def populateTable(self):
     with open("allColonyLandings.txt", "r") as f:
         for line in f:
             testFileLine = ast.literal_eval(line)
+            print("reading line: ",testFileLine)
             if testFileLine["MarketID"] == projectID[0]:
                 resources = testFileLine["ResourcesRequired"]
                 print("resources: ",resources)
                 for i in range(len(resources)):
                     print("from file:", resources[i])
-                    print("type? ", type(resources))
                     print("resource: ", resources[i]["Name_Localised"])
-                    print("resource: ", resources[i]["RequiredAmount"])
+                    print("resource amount: ", resources[i]["RequiredAmount"])
+                    print("resource provided: ", resources[i]["ProvidedAmount"])
                     self.resourceLayout.addWidget(QLabel(resources[i]["Name_Localised"]), startIndex, 0)
                     self.resourceLayout.addWidget(QLabel(str(resources[i]["RequiredAmount"])), startIndex, 1)
                     remaining = str(resources[i]["RequiredAmount"]-resources[i]["ProvidedAmount"])
                     remainingLabel = QLabel(remaining)
                     if (remaining == "0"):
                         remainingLabel.setStyleSheet("background-color: green")
+                    elif(int(remaining) == resources[i]["RequiredAmount"]):
+                        remainingLabel.setStyleSheet("QLabel { color : navy; background-color : yellow; }")
                     else:
                         remainingLabel.setStyleSheet("QLabel { color : navy; background-color : pink; }")
                     self.resourceLayout.addWidget(remainingLabel, startIndex, 2)
@@ -141,24 +144,24 @@ def quitNow():
     sys.exit()
 
 def findUniqueEntries (eventList, uniqueId):
-    data = []
+    data = {}
     uniqueIDs = []
+    firstInstanceInFile = {} # {marketID:logfile} dictionary
     for logfile in logFileListSorted:
         with open(logfile, "r", encoding='iso-8859-1') as f:
             for line in f:
                 rawLine = json.loads(line)
                 if "MarketID" in rawLine and "StationName" in rawLine: 
                     uniqueStations[rawLine["MarketID"]] = rawLine["StationName"]
-                    # with open("allLines.txt","a") as g:
-                    #     g.write(rawLine["StationName"])
-                    #     g.write("\n")
                 if any(event in line for event in eventList):
-                    # with open("allLines.txt","a") as g:
-                    #     g.write(str(rawLine))
-                    #     g.write("\n")
-                    if(rawLine.get(uniqueId) not in uniqueIDs):
-                        data.append(rawLine)
+                    if(rawLine.get(uniqueId) not in uniqueIDs): #it's a new market ID we want
+                        print("ID is: ",rawLine.get(uniqueId))
+                        firstInstanceInFile[rawLine.get(uniqueId)] = str(logfile)
                         uniqueIDs.append(rawLine.get(uniqueId))
+                        data[rawLine.get(uniqueId)] = rawLine
+                    #only update if id and filename are still the same as first find
+                    if(rawLine.get(uniqueId) in uniqueIDs and firstInstanceInFile[rawLine.get(uniqueId)] == str(logfile)):
+                        data[rawLine.get(uniqueId)] = rawLine
 
     for key in list(uniqueStations.keys()):
         if key not in uniqueIDs:
