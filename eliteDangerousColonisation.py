@@ -249,7 +249,7 @@ def populateTable(self, *args):
     percentComplete = str(round(totalProvidedResources/totalNeededResources*100,2))+"%"
     percentPerTrip = str(round(currentTonnage/totalNeededResources*100,2))+"%" if currentTonnage > 0 else "No Cargo"
     for t in resourceTable:
-        tripsPerResource = str(round(int(t[2])/currentTonnage, 1))
+        tripsPerResource = str(round(int(t[2])/currentTonnage, 1)) if currentTonnage > 0 else "No Cargo"
         newResourceTable.append(t + (tripsPerResource,))
 
     printTable = copy.deepcopy(newResourceTable)
