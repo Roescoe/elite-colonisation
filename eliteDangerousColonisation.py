@@ -110,6 +110,20 @@ class MainWindow(QDialog):
         self.hideFinished = QCheckBox("Hide Finished Resources")
 
         quitButton = QPushButton("Quit")
+        
+        with open("settings.txt", "r") as f:
+            settingsFileLines = f.readlines()
+            for line in settingsFileLines:
+                print("Settings line: ", line)
+                if line.startswith("Load_time_selection:"):
+                    print("Found time in settings")
+                    self.loadDate.setCurrentIndex(int(line.split("Load_time_selection: ",1)[1].strip()))
+                if line.startswith("Hide_resources:"):
+                    print("Found checkbox in settings \'"+ line.split("Hide_resources: ",1)[1].strip()+"\'")
+                    print("Type "+ str(type(int(line.split("Hide_resources: ",1)[1].strip()))))
+                    if isinstance(int(line.split("Hide_resources: ",1)[1].strip()), int):
+                        hideBoxIsChecked = bool(int(line.split("Hide_resources: ",1)[1].strip()))
+                        self.hideFinished.setChecked(hideBoxIsChecked)
 
         self.dialogLayout.addWidget(folderLoad, 1, 0)
         self.dialogLayout.addWidget(loadDateText,2,0)
@@ -122,7 +136,7 @@ class MainWindow(QDialog):
         loadFolderButton.clicked.connect(lambda: loadFile(self, lineEdits[0].text()))
         self.refreshProjectButton.clicked.connect(lambda: refreshUniqueEntries(self, ["ColonisationConstructionDepot"], "MarketID"))
         
-        quitButton.clicked.connect(lambda: quitNow())
+        quitButton.clicked.connect(lambda: quitNow(self, lineEdits[0].text()))
 
 def loadFile(self, directory):
     print("loading files")
@@ -145,9 +159,9 @@ def loadFile(self, directory):
     self.shipDropdown.clear()
     self.shipDropdown.addItems(ships)
 
-    with open("settings.txt", "w") as s:
-        s.write("Folder_location: ")
-        s.write(directory)
+    # with open("settings.txt", "w") as s:
+    #     s.write("Folder_location: ")
+    #     s.write(directory)
     with open("allColonyLandings.txt", "w") as f:
         f.write("\n".join(map(str, data.values())))
 
@@ -155,8 +169,8 @@ def loadFile(self, directory):
     print("values: ",uniqueStations.values())
     self.projectDropdown.clear()
     self.projectDropdown.addItems(uniqueStations.values())
-    self.dialogLayout.addWidget(self.projectDropdown, 2, 0)
-    self.dialogLayout.addWidget(self.refreshProjectButton, 2, 1)
+    self.dialogLayout.addWidget(self.projectDropdown, 3, 0)
+    self.dialogLayout.addWidget(self.refreshProjectButton, 3, 1)
     self.setLayout(self.dialogLayout)
 
 def populateTable(self, *args):
@@ -285,7 +299,14 @@ def populateTable(self, *args):
     sortByResTotal.clicked.connect(lambda: populateTable(self, "Total", self.hideFinished.isChecked()))
     sortByResNeed.clicked.connect(lambda: populateTable(self,"Need", self.hideFinished.isChecked()))
 
-def quitNow():
+def quitNow(self, directory):
+    with open("settings.txt", "w") as f:
+        f.write("Folder_location: ")
+        f.write(directory)
+        f.write("\nHide_resources: ")
+        f.write(str(int(self.hideFinished.isChecked())))
+        f.write("\nLoad_time_selection: ")
+        f.write(str(self.loadDate.currentIndex()))
     sys.exit()
 
 def findUniqueEntries (eventList, uniqueId):
