@@ -144,11 +144,9 @@ def loadFile(self, directory):
     data = findUniqueEntries(["ColonisationConstructionDepot"], "MarketID")
     self.shipLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
 
-    # self.hideFinished.setAlignment(Qt.AlignmentFlag.AlignRight)
-    # self.hideFinished.setStyleSheet("text-align: right;")
-    self.dialogLayout.addWidget(self.shipLabel, 3, 0)
-    self.dialogLayout.addWidget(self.shipDropdown, 3, 1)
-    self.dialogLayout.addWidget(self.hideFinished,4, 1)
+    self.dialogLayout.addWidget(self.shipLabel, 4, 0)
+    self.dialogLayout.addWidget(self.shipDropdown, 4, 1)
+    self.dialogLayout.addWidget(self.hideFinished,5, 1)
     ships = []
     loadouts = findShips()
     for ship in loadouts:
@@ -159,9 +157,6 @@ def loadFile(self, directory):
     self.shipDropdown.clear()
     self.shipDropdown.addItems(ships)
 
-    # with open("settings.txt", "w") as s:
-    #     s.write("Folder_location: ")
-    #     s.write(directory)
     with open("allColonyLandings.txt", "w") as f:
         f.write("\n".join(map(str, data.values())))
 
@@ -182,6 +177,7 @@ def populateTable(self, *args):
     totalNeededResources = 0
     currentTonnage = 0
     resourceTable = []
+    newResourceTable = []
     sortType = "none"
     HideFinishedResources = False
 
@@ -223,6 +219,7 @@ def populateTable(self, *args):
     self.resourceLayout.addWidget(QLabel("Resource"), startIndex - 1, 0)
     self.resourceLayout.addWidget(QLabel("Total Need"), startIndex - 1, 1)
     self.resourceLayout.addWidget(QLabel("Current Need"), startIndex - 1, 2)
+    self.resourceLayout.addWidget(QLabel("Trips Remaining"), startIndex - 1, 3)
     line = QFrame()
     line.setFrameShape(QFrame.Shape.HLine)
     self.resourceLayout.addWidget(line, startIndex, 0, 1, 20)
@@ -242,8 +239,8 @@ def populateTable(self, *args):
                     print("resource provided: ", resources[i]["ProvidedAmount"])
                     resourceLabel = resources[i]["Name_Localised"]
                     resourceAmount = str(resources[i]["RequiredAmount"])
-                    remainingLabel = str(resources[i]["RequiredAmount"]-resources[i]["ProvidedAmount"])
-                     
+                    remainingLabel = str(resources[i]["RequiredAmount"]-resources[i]["ProvidedAmount"]) 
+
                     resourceTuple = resourceLabel, resourceAmount, remainingLabel
                     resourceTable.append(resourceTuple)
                     totalProvidedResources += resources[i]["ProvidedAmount"]
@@ -251,7 +248,11 @@ def populateTable(self, *args):
     trips = str(round((totalNeededResources-totalProvidedResources)/currentTonnage,1)) if currentTonnage > 0 else "No Cargo"
     percentComplete = str(round(totalProvidedResources/totalNeededResources*100,2))+"%"
     percentPerTrip = str(round(currentTonnage/totalNeededResources*100,2))+"%" if currentTonnage > 0 else "No Cargo"
-    printTable = copy.deepcopy(resourceTable)
+    for t in resourceTable:
+        tripsPerResource = str(round(int(t[2])/currentTonnage, 1))
+        newResourceTable.append(t + (tripsPerResource,))
+
+    printTable = copy.deepcopy(newResourceTable)
 
     if len(args) >= 2:
         HideFinishedResources = args[1]   
@@ -279,7 +280,7 @@ def populateTable(self, *args):
     self.statsLayout.addWidget(QLabel("Still Needed"), 2, 2)
     self.statsLayout.addWidget(QLabel(str(totalNeededResources-totalProvidedResources)), 2, 3)
 
-    for i,(resourceName, resourceTotal, remaining) in enumerate(printTable):
+    for i,(resourceName, resourceTotal, remaining, tripsPerResource) in enumerate(printTable):
         self.resourceLayout.addWidget(QLabel(resourceName), i + startIndex + 1, 0)
         self.resourceLayout.addWidget(QLabel(resourceTotal), i + startIndex + 1, 1)
         remainingLabel = QLabel(remaining)
@@ -290,9 +291,10 @@ def populateTable(self, *args):
         else:
             remainingLabel.setStyleSheet("QLabel { color : navy; background-color : pink; }")
         self.resourceLayout.addWidget(remainingLabel, i + startIndex + 1, 2)
+        self.resourceLayout.addWidget(QLabel(tripsPerResource), i + startIndex + 1, 3)
         
-    self.dialogLayout.addLayout(self.statsLayout,5, 0, 1, 3)
-    self.dialogLayout.addLayout(self.resourceLayout,6, 0, 1, 3)
+    self.dialogLayout.addLayout(self.statsLayout,6, 0, 1, 3)
+    self.dialogLayout.addLayout(self.resourceLayout,7, 0, 1, 3)
     populated = True
 
     sortByResName.clicked.connect(lambda: populateTable(self, "Resource", self.hideFinished.isChecked()))
