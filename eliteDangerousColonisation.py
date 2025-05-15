@@ -276,9 +276,12 @@ def populateTable(self, *args):
     self.statsLayout.addWidget(QLabel("Percent per Trip:"), 1, 0)
     self.statsLayout.addWidget(QLabel(percentPerTrip), 1, 1)
     self.statsLayout.addWidget(QLabel("Total Materials:"), 1, 2)
-    self.statsLayout.addWidget(QLabel(str(totalNeededResources)), 1, 3)
+    totalNeededResourcesCommas = f"{int(totalNeededResources):,}"
+    self.statsLayout.addWidget(QLabel(str(totalNeededResourcesCommas)), 1, 3)
     self.statsLayout.addWidget(QLabel("Still Needed"), 2, 2)
-    self.statsLayout.addWidget(QLabel(str(totalNeededResources-totalProvidedResources)), 2, 3)
+    stillNeeded = int(totalNeededResources)-totalProvidedResources
+    stillNeeded = f"{stillNeeded:,}"
+    self.statsLayout.addWidget(QLabel(str(stillNeeded)), 2, 3)
 
     for i,(resourceName, resourceTotal, remaining, tripsPerResource) in enumerate(printTable):
         remainingLabel = QLabel()
