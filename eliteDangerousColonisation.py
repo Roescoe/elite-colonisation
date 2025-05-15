@@ -281,15 +281,18 @@ def populateTable(self, *args):
     self.statsLayout.addWidget(QLabel(str(totalNeededResources-totalProvidedResources)), 2, 3)
 
     for i,(resourceName, resourceTotal, remaining, tripsPerResource) in enumerate(printTable):
-        self.resourceLayout.addWidget(QLabel(resourceName), i + startIndex + 1, 0)
-        self.resourceLayout.addWidget(QLabel(resourceTotal), i + startIndex + 1, 1)
-        remainingLabel = QLabel(remaining)
+        remainingLabel = QLabel()
         if (remaining == "0"):
             remainingLabel.setStyleSheet("background-color: green")
         elif(int(remaining) == int(resourceTotal)):
             remainingLabel.setStyleSheet("QLabel { color : navy; background-color : yellow; }")
         else:
             remainingLabel.setStyleSheet("QLabel { color : navy; background-color : pink; }")
+        self.resourceLayout.addWidget(QLabel(resourceName), i + startIndex + 1, 0)
+        resourceTotal = f"{int(resourceTotal):,}"
+        self.resourceLayout.addWidget(QLabel(resourceTotal), i + startIndex + 1, 1)
+        remaining = f"{int(remaining):,}"
+        remainingLabel.setText(remaining)
         self.resourceLayout.addWidget(remainingLabel, i + startIndex + 1, 2)
         self.resourceLayout.addWidget(QLabel(tripsPerResource), i + startIndex + 1, 3)
         
