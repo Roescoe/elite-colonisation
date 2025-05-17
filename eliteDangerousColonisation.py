@@ -198,6 +198,7 @@ def populateTable(self, *args):
     newResourceTable = []
     sortType = "none"
     HideFinishedResources = False
+    mostRecentSort = "none"
 
 
     currentSelectedProjectName = self.projectDropdown.currentText()
@@ -257,10 +258,14 @@ def populateTable(self, *args):
 
     printTable = copy.deepcopy(newResourceTable)
 
+    for i in args:
+        print("Arrrrrgggs: " +str(i))
     if len(args) >= 2:
         HideFinishedResources = args[1]
     if len(args) >= 3:
-           self.tableSize.setCurrentIndex(args[2])
+        self.tableSize.setCurrentIndex(args[2])
+    if len(args) >= 4:
+        mostRecentSort = args[3]
     match self.tableSize.currentIndex():
         case 0:
             fontSize = 12
@@ -284,7 +289,11 @@ def populateTable(self, *args):
         printTable.sort(key = lambda y: (int(y[2]),y[1]))
     if sortType == "Need": 
         printTable.sort(key = lambda z: (int(z[3]),z[1]))
-
+    if sortType == "Trips":
+        printTable.sort(key = lambda z: (int(z[3]),z[1]))
+    if sortType == mostRecentSort:
+        printTable = printTable[::-1]
+        sortType = "none"
 
     self.statsLayout.addWidget(QLabel("Trips Left:"), 1, 0)
     self.statsLayout.addWidget(QLabel(trips), 1, 1)
@@ -299,31 +308,23 @@ def populateTable(self, *args):
     stillNeeded = int(totalNeededResources)-totalProvidedResources
     stillNeeded = f"{stillNeeded:,}"
     self.statsLayout.addWidget(QLabel(str(stillNeeded)), 3, 3)
-    sortByResType = QPushButton("Sort by Type")
-    sortByResName = QPushButton("Sort by Resource")
-    sortByResTotal = QPushButton("Sort by Total")
-    sortByResNeed = QPushButton("Sort by Need")
-    
+    sortByResType = QPushButton("Category")
+    sortByResName = QPushButton("Resource")
+    sortByResTotal = QPushButton("Total Need")
+    sortByResNeed = QPushButton("Current Need")
+    tripsRemaining = QPushButton("Trips Remaining")
+
+    sortByResType.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+    sortByResName.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+    sortByResTotal.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+    sortByResNeed.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+    tripsRemaining.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+
     self.resourceLayout.addWidget(sortByResType,startIndex - 2, 0)
     self.resourceLayout.addWidget(sortByResName,startIndex - 2, 1)
     self.resourceLayout.addWidget(sortByResTotal,startIndex - 2, 2)
     self.resourceLayout.addWidget(sortByResNeed,startIndex - 2, 3)
-    
-    categoryLabel = QLabel("Category")
-    categoryLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
-    self.resourceLayout.addWidget(categoryLabel, startIndex - 1, 0)
-    resourceTableLabel = QLabel("Resource")
-    resourceTableLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
-    self.resourceLayout.addWidget(resourceTableLabel, startIndex - 1, 1)
-    totalNeedLabel = QLabel("Total Need")
-    totalNeedLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
-    self.resourceLayout.addWidget(totalNeedLabel, startIndex - 1, 2)
-    currentNeedLabel = QLabel("Current Need")
-    currentNeedLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
-    self.resourceLayout.addWidget(currentNeedLabel, startIndex - 1, 3)
-    tripsRemainingLabel = QLabel("Trips Remaining")
-    tripsRemainingLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
-    self.resourceLayout.addWidget(tripsRemainingLabel, startIndex - 1, 4)
+    self.resourceLayout.addWidget(tripsRemaining, startIndex - 2, 4)
 
     for i,(resourceType, resourceName, resourceTotal, remaining, tripsPerResource) in enumerate(printTable):
         resourceTypeLabel = QLabel(resourceType)
@@ -355,10 +356,11 @@ def populateTable(self, *args):
     self.dialogLayout.addLayout(self.resourceLayout,8, 0, 1, 3)
     populated = True
 
-    sortByResType.clicked.connect(lambda: populateTable(self, "Type", self.hideFinished.isChecked()))
-    sortByResName.clicked.connect(lambda: populateTable(self, "Resource", self.hideFinished.isChecked()))
-    sortByResTotal.clicked.connect(lambda: populateTable(self, "Total", self.hideFinished.isChecked()))
-    sortByResNeed.clicked.connect(lambda: populateTable(self,"Need", self.hideFinished.isChecked()))
+    sortByResType.clicked.connect(lambda: populateTable(self, "Type", self.hideFinished.isChecked(), self.tableSize.currentIndex(), sortType))
+    sortByResName.clicked.connect(lambda: populateTable(self, "Resource", self.hideFinished.isChecked(),self.tableSize.currentIndex(), sortType))
+    sortByResTotal.clicked.connect(lambda: populateTable(self, "Total", self.hideFinished.isChecked(), self.tableSize.currentIndex(), sortType))
+    sortByResNeed.clicked.connect(lambda: populateTable(self,"Need", self.hideFinished.isChecked(), self.tableSize.currentIndex(), sortType))
+    tripsRemaining.clicked.connect(lambda: populateTable(self,"Trips", self.hideFinished.isChecked(), self.tableSize.currentIndex(), sortType))
 
 def quitNow(self, directory):
     with open("settings.txt", "w") as f:
@@ -420,7 +422,7 @@ def refreshUniqueEntries (self, eventList, uniqueId):
     with open("allColonyLandings.txt", "w") as f:
         f.write("\n".join(map(str, data.values())))
     print("******Lines in current logfile:*******", lineCount)
-    populateTable(self, "Resource", self.hideFinished.isChecked(), self.tableSize.currentIndex())
+    populateTable(self, "Resource", self.hideFinished.isChecked(), self.tableSize.currentIndex(),"Resource")
 
 def findShips():
     #"event":"Loadout"
