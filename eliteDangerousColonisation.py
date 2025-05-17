@@ -62,19 +62,26 @@ def setUpLogfile(self, directory):
     print("files*: ",logFileList)
     print("times*: ",createTime)
     print("sorts*: ",logFileListSorted)
+    with open(os.path.join(folderdir, "Market.json"),"r", encoding='iso-8859-1') as f:
+        testFileLine = json.load(f)
+
+    for i in testFileLine["Items"]:
+        if "Name_Localised" in i and "Category_Localised" in i:
+            resourceTypeDict[i["Name_Localised"]] = i["Category_Localised"]
+    print("Every resource: ",resourceTypeDict)
+
     return logFileListSorted
 
 class MainWindow(QDialog):
     def __init__(self):
         super().__init__()
         print("setting up window")
-        
+
         self.setWindowTitle("Roescoe's Elite Colonisation App")
         self.setGeometry(100, 100, 1000, 100)
         self.dialogLayout = QGridLayout()
         self.resourceLayout = QGridLayout()
         self.statsLayout = QGridLayout()
-
 
         lineEdits = []
         for x in range(5):
@@ -95,19 +102,24 @@ class MainWindow(QDialog):
         
         loadDateText = QLabel("Load no older than:")
         self.loadDate = QComboBox()
+        self.loadDate.addItem("All")
+        self.loadDate.setCurrentIndex(2)
+        self.shipLabel = QLabel("Ship:")
+        self.shipDropdown = QComboBox()
+        self.projectDropdown = QComboBox()
+        self.refreshProjectButton = QPushButton("Update")
+        self.hideFinished = QCheckBox("Hide Finished Resources")
+        self.tableSize = QComboBox()
+
         self.loadDate.addItem("1 Day")
         self.loadDate.addItem("1 Week")
         self.loadDate.addItem("1 Month")
         self.loadDate.addItem("100 Days")
-        self.loadDate.addItem("All")
-        self.loadDate.setCurrentIndex(2)
-
-        self.shipLabel = QLabel("Ship:")
-        self.shipDropdown = QComboBox()
-
-        self.projectDropdown = QComboBox()
-        self.refreshProjectButton = QPushButton("Update")
-        self.hideFinished = QCheckBox("Hide Finished Resources")
+        self.tableSize.addItem("12pt")
+        self.tableSize.addItem("16pt")
+        self.tableSize.addItem("20pt")
+        self.tableSize.addItem("32pt")
+        self.tableSize.setCurrentIndex(0)
 
         quitButton = QPushButton("Quit")
         
@@ -120,10 +132,14 @@ class MainWindow(QDialog):
                     self.loadDate.setCurrentIndex(int(line.split("Load_time_selection: ",1)[1].strip()))
                 if line.startswith("Hide_resources:"):
                     print("Found checkbox in settings \'"+ line.split("Hide_resources: ",1)[1].strip()+"\'")
-                    print("Type "+ str(type(int(line.split("Hide_resources: ",1)[1].strip()))))
                     if isinstance(int(line.split("Hide_resources: ",1)[1].strip()), int):
                         hideBoxIsChecked = bool(int(line.split("Hide_resources: ",1)[1].strip()))
                         self.hideFinished.setChecked(hideBoxIsChecked)
+                if line.startswith("Table_size:"):
+                    print("Found table size in settings")
+                    if isinstance(int(line.split("Table_size: ",1)[1].strip()), int):
+                        tableSizeIndex = int(line.split("Table_size: ",1)[1].strip())
+                        self.tableSize.setCurrentIndex(tableSizeIndex)
 
         self.dialogLayout.addWidget(folderLoad, 1, 0)
         self.dialogLayout.addWidget(loadDateText,2,0)
@@ -147,6 +163,8 @@ def loadFile(self, directory):
     self.dialogLayout.addWidget(self.shipLabel, 4, 0)
     self.dialogLayout.addWidget(self.shipDropdown, 4, 1)
     self.dialogLayout.addWidget(self.hideFinished,5, 1)
+    self.dialogLayout.addWidget(QLabel("Table Size:", alignment=Qt.AlignmentFlag.AlignRight), 6, 0)
+    self.dialogLayout.addWidget(self.tableSize, 6, 1)
     ships = []
     loadouts = findShips()
     for ship in loadouts:
@@ -206,20 +224,22 @@ def populateTable(self, *args):
 
     currentTonnage = int(self.shipDropdown.currentText().rsplit(" ",1)[1].split("T")[0])
 
-
+    sortByResType = QPushButton("Sort by Type")
     sortByResName = QPushButton("Sort by Resource")
     sortByResTotal = QPushButton("Sort by Total")
     sortByResNeed = QPushButton("Sort by Need")
     
     
-    self.resourceLayout.addWidget(sortByResName,startIndex - 2, 0)
-    self.resourceLayout.addWidget(sortByResTotal,startIndex - 2, 1)
-    self.resourceLayout.addWidget(sortByResNeed,startIndex - 2, 2)
+    self.resourceLayout.addWidget(sortByResType,startIndex - 2, 0)
+    self.resourceLayout.addWidget(sortByResName,startIndex - 2, 1)
+    self.resourceLayout.addWidget(sortByResTotal,startIndex - 2, 2)
+    self.resourceLayout.addWidget(sortByResNeed,startIndex - 2, 3)
     
-    self.resourceLayout.addWidget(QLabel("Resource"), startIndex - 1, 0)
-    self.resourceLayout.addWidget(QLabel("Total Need"), startIndex - 1, 1)
-    self.resourceLayout.addWidget(QLabel("Current Need"), startIndex - 1, 2)
-    self.resourceLayout.addWidget(QLabel("Trips Remaining"), startIndex - 1, 3)
+    self.resourceLayout.addWidget(QLabel("Category"), startIndex - 1, 0)
+    self.resourceLayout.addWidget(QLabel("Resource"), startIndex - 1, 1)
+    self.resourceLayout.addWidget(QLabel("Total Need"), startIndex - 1, 2)
+    self.resourceLayout.addWidget(QLabel("Current Need"), startIndex - 1, 3)
+    self.resourceLayout.addWidget(QLabel("Trips Remaining"), startIndex - 1, 4)
     line = QFrame()
     line.setFrameShape(QFrame.Shape.HLine)
     self.resourceLayout.addWidget(line, startIndex, 0, 1, 20)
@@ -250,59 +270,85 @@ def populateTable(self, *args):
     percentPerTrip = str(round(currentTonnage/totalNeededResources*100,2))+"%" if currentTonnage > 0 else "No Cargo"
     for t in resourceTable:
         tripsPerResource = str(round(int(t[2])/currentTonnage, 1)) if currentTonnage > 0 else "No Cargo"
-        newResourceTable.append(t + (tripsPerResource,))
+        resourceType = resourceTypeDict[t[0]]
+        newResourceTable.append((resourceType,) + t + (tripsPerResource,))
 
     printTable = copy.deepcopy(newResourceTable)
 
     if len(args) >= 2:
-        HideFinishedResources = args[1]   
+        HideFinishedResources = args[1]
+    if len(args) >= 3:
+           self.tableSize.setCurrentIndex(args[2])
+    match self.tableSize.currentIndex():
+        case 0:
+            fontSize = 12
+        case 1:
+            fontSize = 16
+        case 2:
+            fontSize = 20
+        case 3:
+            fontSize = 32
     if HideFinishedResources:
         self.hideFinished.setChecked(True)
         printTable = [p for p in printTable if "0" not in p]
 
     if len(args) >= 1:
         sortType = args[0]
-    if sortType == "Resource":
+    if sortType == "Type":
         printTable.sort(key = lambda x: x[0])
+    if sortType == "Resource":
+        printTable.sort(key = lambda x: x[1])
     if sortType == "Total":    
-        printTable.sort(key = lambda y: (int(y[1]),y[0]))
+        printTable.sort(key = lambda y: (int(y[2]),y[1]))
     if sortType == "Need": 
-        printTable.sort(key = lambda z: (int(z[2]),z[0]))
+        printTable.sort(key = lambda z: (int(z[3]),z[1]))
 
-    self.statsLayout.addWidget(QLabel("Trips Left:"), 0, 0)
-    self.statsLayout.addWidget(QLabel(trips), 0, 1)
-    self.statsLayout.addWidget(QLabel("Percent Complete:"), 0, 2)
-    self.statsLayout.addWidget(QLabel(percentComplete), 0, 3)
-    self.statsLayout.addWidget(QLabel("Percent per Trip:"), 1, 0)
-    self.statsLayout.addWidget(QLabel(percentPerTrip), 1, 1)
-    self.statsLayout.addWidget(QLabel("Total Materials:"), 1, 2)
+
+    self.statsLayout.addWidget(QLabel("Trips Left:"), 1, 0)
+    self.statsLayout.addWidget(QLabel(trips), 1, 1)
+    self.statsLayout.addWidget(QLabel("Percent Complete:"), 1, 2)
+    self.statsLayout.addWidget(QLabel(percentComplete), 1, 3)
+    self.statsLayout.addWidget(QLabel("Percent per Trip:"), 2, 0)
+    self.statsLayout.addWidget(QLabel(percentPerTrip), 2, 1)
+    self.statsLayout.addWidget(QLabel("Total Materials:"), 2, 2)
     totalNeededResourcesCommas = f"{int(totalNeededResources):,}"
-    self.statsLayout.addWidget(QLabel(str(totalNeededResourcesCommas)), 1, 3)
-    self.statsLayout.addWidget(QLabel("Still Needed"), 2, 2)
+    self.statsLayout.addWidget(QLabel(str(totalNeededResourcesCommas)), 2, 3)
+    self.statsLayout.addWidget(QLabel("Still Needed"), 3, 2)
     stillNeeded = int(totalNeededResources)-totalProvidedResources
     stillNeeded = f"{stillNeeded:,}"
-    self.statsLayout.addWidget(QLabel(str(stillNeeded)), 2, 3)
+    self.statsLayout.addWidget(QLabel(str(stillNeeded)), 3, 3)
 
-    for i,(resourceName, resourceTotal, remaining, tripsPerResource) in enumerate(printTable):
+    for i,(resourceType, resourceName, resourceTotal, remaining, tripsPerResource) in enumerate(printTable):
+        resourceTypeLabel = QLabel(resourceType)
+        resourceTypeLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+        self.resourceLayout.addWidget(resourceTypeLabel, i + startIndex + 1, 0)
         remainingLabel = QLabel()
         if (remaining == "0"):
-            remainingLabel.setStyleSheet("background-color: green")
+            remainingLabel.setStyleSheet("background-color: green; font-size: "+ str(fontSize) +"px;")
         elif(int(remaining) == int(resourceTotal)):
-            remainingLabel.setStyleSheet("QLabel { color : navy; background-color : yellow; }")
+            remainingLabel.setStyleSheet("color : navy; background-color : yellow; font-size: "+ str(fontSize) +"px;")
         else:
-            remainingLabel.setStyleSheet("QLabel { color : navy; background-color : pink; }")
-        self.resourceLayout.addWidget(QLabel(resourceName), i + startIndex + 1, 0)
+            remainingLabel.setStyleSheet("color : navy; background-color : pink; font-size: "+ str(fontSize) +"px;")
+        resourceNameLabel = QLabel(resourceName)
+        resourceNameLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+        self.resourceLayout.addWidget(resourceNameLabel, i + startIndex + 1, 1)
         resourceTotal = f"{int(resourceTotal):,}"
-        self.resourceLayout.addWidget(QLabel(resourceTotal), i + startIndex + 1, 1)
+        resourceTotalLabel = QLabel(resourceTotal)
+        resourceTotalLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+        self.resourceLayout.addWidget(resourceTotalLabel, i + startIndex + 1, 2)
         remaining = f"{int(remaining):,}"
+        # remainingLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
         remainingLabel.setText(remaining)
-        self.resourceLayout.addWidget(remainingLabel, i + startIndex + 1, 2)
-        self.resourceLayout.addWidget(QLabel(tripsPerResource), i + startIndex + 1, 3)
+        self.resourceLayout.addWidget(remainingLabel, i + startIndex + 1, 3)
+        tripsPerResourceLabel = QLabel(tripsPerResource)
+        tripsPerResourceLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+        self.resourceLayout.addWidget(tripsPerResourceLabel, i + startIndex + 1, 4)
         
-    self.dialogLayout.addLayout(self.statsLayout,6, 0, 1, 3)
-    self.dialogLayout.addLayout(self.resourceLayout,7, 0, 1, 3)
+    self.dialogLayout.addLayout(self.statsLayout,7, 0, 1, 3)
+    self.dialogLayout.addLayout(self.resourceLayout,8, 0, 1, 3)
     populated = True
 
+    sortByResType.clicked.connect(lambda: populateTable(self, "Type", self.hideFinished.isChecked()))
     sortByResName.clicked.connect(lambda: populateTable(self, "Resource", self.hideFinished.isChecked()))
     sortByResTotal.clicked.connect(lambda: populateTable(self, "Total", self.hideFinished.isChecked()))
     sortByResNeed.clicked.connect(lambda: populateTable(self,"Need", self.hideFinished.isChecked()))
@@ -315,6 +361,8 @@ def quitNow(self, directory):
         f.write(str(int(self.hideFinished.isChecked())))
         f.write("\nLoad_time_selection: ")
         f.write(str(self.loadDate.currentIndex()))
+        f.write("\nTable_size: ")
+        f.write(str(self.tableSize.currentIndex()))
     sys.exit()
 
 def findUniqueEntries (eventList, uniqueId):
@@ -365,7 +413,7 @@ def refreshUniqueEntries (self, eventList, uniqueId):
     with open("allColonyLandings.txt", "w") as f:
         f.write("\n".join(map(str, data.values())))
     print("******Lines in current logfile:*******", lineCount)
-    populateTable(self, "Resource", self.hideFinished.isChecked())
+    populateTable(self, "Resource", self.hideFinished.isChecked(), self.tableSize.currentIndex())
 
 def findShips():
     #"event":"Loadout"
@@ -386,6 +434,7 @@ def findShips():
     return loadouts
 
 if __name__ == '__main__':
+    resourceTypeDict = {}
     loadouts = {}
     data = {}
     firstInstanceInFile = {} # {marketID:logfile} dictionary
