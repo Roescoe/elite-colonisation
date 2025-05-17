@@ -224,27 +224,9 @@ def populateTable(self, *args):
 
     currentTonnage = int(self.shipDropdown.currentText().rsplit(" ",1)[1].split("T")[0])
 
-    sortByResType = QPushButton("Sort by Type")
-    sortByResName = QPushButton("Sort by Resource")
-    sortByResTotal = QPushButton("Sort by Total")
-    sortByResNeed = QPushButton("Sort by Need")
-    
-    
-    self.resourceLayout.addWidget(sortByResType,startIndex - 2, 0)
-    self.resourceLayout.addWidget(sortByResName,startIndex - 2, 1)
-    self.resourceLayout.addWidget(sortByResTotal,startIndex - 2, 2)
-    self.resourceLayout.addWidget(sortByResNeed,startIndex - 2, 3)
-    
-    self.resourceLayout.addWidget(QLabel("Category"), startIndex - 1, 0)
-    self.resourceLayout.addWidget(QLabel("Resource"), startIndex - 1, 1)
-    self.resourceLayout.addWidget(QLabel("Total Need"), startIndex - 1, 2)
-    self.resourceLayout.addWidget(QLabel("Current Need"), startIndex - 1, 3)
-    self.resourceLayout.addWidget(QLabel("Trips Remaining"), startIndex - 1, 4)
     line = QFrame()
     line.setFrameShape(QFrame.Shape.HLine)
     self.resourceLayout.addWidget(line, startIndex, 0, 1, 20)
-
-
 
     with open("allColonyLandings.txt", "r") as f:
         for line in f:
@@ -317,6 +299,31 @@ def populateTable(self, *args):
     stillNeeded = int(totalNeededResources)-totalProvidedResources
     stillNeeded = f"{stillNeeded:,}"
     self.statsLayout.addWidget(QLabel(str(stillNeeded)), 3, 3)
+    sortByResType = QPushButton("Sort by Type")
+    sortByResName = QPushButton("Sort by Resource")
+    sortByResTotal = QPushButton("Sort by Total")
+    sortByResNeed = QPushButton("Sort by Need")
+    
+    self.resourceLayout.addWidget(sortByResType,startIndex - 2, 0)
+    self.resourceLayout.addWidget(sortByResName,startIndex - 2, 1)
+    self.resourceLayout.addWidget(sortByResTotal,startIndex - 2, 2)
+    self.resourceLayout.addWidget(sortByResNeed,startIndex - 2, 3)
+    
+    categoryLabel = QLabel("Category")
+    categoryLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+    self.resourceLayout.addWidget(categoryLabel, startIndex - 1, 0)
+    resourceTableLabel = QLabel("Resource")
+    resourceTableLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+    self.resourceLayout.addWidget(resourceTableLabel, startIndex - 1, 1)
+    totalNeedLabel = QLabel("Total Need")
+    totalNeedLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+    self.resourceLayout.addWidget(totalNeedLabel, startIndex - 1, 2)
+    currentNeedLabel = QLabel("Current Need")
+    currentNeedLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+    self.resourceLayout.addWidget(currentNeedLabel, startIndex - 1, 3)
+    tripsRemainingLabel = QLabel("Trips Remaining")
+    tripsRemainingLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+    self.resourceLayout.addWidget(tripsRemainingLabel, startIndex - 1, 4)
 
     for i,(resourceType, resourceName, resourceTotal, remaining, tripsPerResource) in enumerate(printTable):
         resourceTypeLabel = QLabel(resourceType)
