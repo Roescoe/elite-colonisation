@@ -136,7 +136,7 @@ class MainWindow(QDialog):
         self.shipDropdown.setStyleSheet("color:snow; background-color: #151E3D;}")
         self.projectDropdown.setStyleSheet("color:snow; background-color: #151E3D;}")
         self.refreshProjectButton.setStyleSheet("color:snow; background-color: #151E3D;")
-        self.hideFinished.setStyleSheet("color:snow; background-color: #151E3D;border: QCheckBox::indicator { background-color: lightgreen; }")
+        self.hideFinished.setStyleSheet("color:snow; background-color: #151E3D;border: 3px solid snow;")
         self.tableSize.setStyleSheet("color:snow; background-color: #151E3D;}")
         quitButton.setStyleSheet("color:snow; background-color: #151E3D;")
         
@@ -352,9 +352,9 @@ def populateTable(self, *args):
         if (remaining == "0"):
             remainingLabel.setStyleSheet("color: snow; background-color: green; font-size: "+ str(fontSize) +"px;")
         elif(int(remaining) == int(resourceTotal)):
-            remainingLabel.setStyleSheet("color: snow; background-color: #281E5D; font-size: "+ str(fontSize) +"px;")
-        else:
             remainingLabel.setStyleSheet("color: snow; background-color: #c32148; font-size: "+ str(fontSize) +"px;")
+        else:
+            remainingLabel.setStyleSheet("color: snow; background-color: #281E5D; font-size: "+ str(fontSize) +"px;")
         resourceNameLabel = QLabel(resourceName)
         resourceNameLabel.setStyleSheet("font-size: "+ str(fontSize) +"px; color: snow;")
         self.resourceLayout.addWidget(resourceNameLabel, i + startIndex + 1, 1)
