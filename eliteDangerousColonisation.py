@@ -213,7 +213,7 @@ def populateTable(self, *args):
     print("Populating table:")
     startIndex = 7
     projectID = -1
-    totalProvidedResources = 0
+    totalProvidedResources = -1
     totalNeededResources = -1
     currentTonnage = -1
     resourceTable = []
@@ -269,11 +269,7 @@ def populateTable(self, *args):
                     resourceTable.append(resourceTuple)
                     totalProvidedResources += resources[i]["ProvidedAmount"]
                     totalNeededResources += resources[i]["RequiredAmount"]
-    percentComplete = round(totalProvidedResources/totalNeededResources*100,2)
-    if totalNeededResources < 0 or totalNeededResources > 100:
-        percentComplete = "100%"
-    else:
-        percentComplete = str(percentComplete)+"%"
+    percentComplete = str(round(totalProvidedResources/totalNeededResources*100,2))+"%"
     if currentTonnage <= 0:
         percentPerTrip = "No Cargo"
         trips = "No Cargo"
