@@ -352,13 +352,15 @@ def populateTable(self, *args):
         resourceTotal = f"{int(resourceTotal):,}"
         resourceTotalLabel = QLabel(resourceTotal)
         resourceTotalLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+        resourceTotalLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.resourceLayout.addWidget(resourceTotalLabel, i + startIndex + 1, 2)
         remaining = f"{int(remaining):,}"
-        # remainingLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
         remainingLabel.setText(remaining)
+        remainingLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.resourceLayout.addWidget(remainingLabel, i + startIndex + 1, 3)
         tripsPerResourceLabel = QLabel(tripsPerResource)
         tripsPerResourceLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+        tripsPerResourceLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.resourceLayout.addWidget(tripsPerResourceLabel, i + startIndex + 1, 4)
         
     self.dialogLayout.addLayout(self.statsLayout,7, 0, 1, 3)
