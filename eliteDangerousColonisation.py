@@ -140,7 +140,7 @@ class MainWindow(QDialog):
         self.shipDropdown.setStyleSheet("color:snow; background-color: #151E3D;}")
         self.projectDropdown.setStyleSheet("color:snow; background-color: #151E3D;}")
         self.refreshProjectButton.setStyleSheet("color:snow; background-color: #151E3D;")
-        self.hideFinished.setStyleSheet("color:snow; background-color: #151E3D; QCheckBox::indicator {background-color: snow; };")
+        # self.hideFinished.setStyleSheet("color:snow; background-color: #151E3D; QCheckBox::indicator {background-color: snow; };")
         self.tableSize.setStyleSheet("color:snow; background-color: #151E3D;}")
         quitButton.setStyleSheet("color:snow; background-color: #151E3D;")
         
@@ -270,7 +270,13 @@ def populateTable(self, *args):
                     totalProvidedResources += resources[i]["ProvidedAmount"]
                     totalNeededResources += resources[i]["RequiredAmount"]
     trips = str(round((totalNeededResources-totalProvidedResources)/currentTonnage,1)) if currentTonnage > 0 else "No Cargo"
-    percentComplete = str(round(totalProvidedResources/totalNeededResources*100,2))+"%"
+    if trips <= str(0):
+        trips = "Complete!"
+    percentComplete = round(totalProvidedResources/totalNeededResources*100,2)
+    if percentComplete >= 100:
+        percentComplete = "100%"
+    else:
+        percentComplete = str(percentComplete)+"%"
     percentPerTrip = str(round(currentTonnage/totalNeededResources*100,2))+"%" if currentTonnage > 0 else "No Cargo"
     for t in resourceTable:
         tripsPerResource = str(round(int(t[2])/currentTonnage, 1)) if currentTonnage > 0 else "No Cargo"
@@ -308,8 +314,6 @@ def populateTable(self, *args):
         printTable.sort(key = lambda y: (int(y[2])))
     elif self.sortType == "Need": 
         printTable.sort(key = lambda z: (int(z[3])))
-    # elif self.sortType == "Trips":
-        # printTable.sort(key = lambda z: (int(z[3])))
     if self.needsToReverse[self.sortType]:
         printTable.reverse()
         self.needsToReverse[self.sortType] = False
@@ -325,8 +329,13 @@ def populateTable(self, *args):
     totalMaterialsLabel = QLabel("Total Materials:")
     totalNeededResourcesCommas = QLabel(str(f"{int(totalNeededResources):,}"))
     stillNeededLabel = QLabel("Still Needed")
-    stillNeeded = int(totalNeededResources)-totalProvidedResources
-    stillNeeded = QLabel(str(f"{stillNeeded:,}"))
+    if totalNeededResources-totalProvidedResources > 0:
+        print("Still need: ", totalNeededResources)
+        print("Still need: ", totalProvidedResources)
+        stillNeeded = int(totalNeededResources)-totalProvidedResources
+        stillNeeded = QLabel(str(f"{stillNeeded:,}"))
+    else:
+        stillNeeded = QLabel("Complete!")
 
     tripsLeftLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
     tripsLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
@@ -387,9 +396,12 @@ def populateTable(self, *args):
         resourceTotalLabel.setStyleSheet("font-size: "+ str(fontSize) +"px; color: snow;")
         resourceTotalLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.resourceLayout.addWidget(resourceTotalLabel, i + startIndex + 1, 2)
-        remaining = f"{int(remaining):,}"
-        remainingLabel.setText(remaining)
-        remainingLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
+        if remaining == "0":
+            remainingLabel.setText("None")
+            remainingLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        else:
+            remainingLabel.setText(f"{int(remaining):,}")
+            remainingLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.resourceLayout.addWidget(remainingLabel, i + startIndex + 1, 3)
         tripsPerResourceLabel = QLabel(tripsPerResource)
         tripsPerResourceLabel.setStyleSheet("font-size: "+ str(fontSize) +"px; color: snow;")
