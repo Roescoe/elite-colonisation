@@ -269,19 +269,37 @@ def populateTable(self, *args):
                     resourceTable.append(resourceTuple)
                     totalProvidedResources += resources[i]["ProvidedAmount"]
                     totalNeededResources += resources[i]["RequiredAmount"]
-    trips = str(round((totalNeededResources-totalProvidedResources)/currentTonnage,1)) if currentTonnage > 0 else "No Cargo"
-    if trips <= str(0):
-        trips = "Complete!"
     percentComplete = round(totalProvidedResources/totalNeededResources*100,2)
-    if percentComplete >= 100:
+    if totalNeededResources < 0 or totalNeededResources > 100:
         percentComplete = "100%"
     else:
         percentComplete = str(percentComplete)+"%"
-    percentPerTrip = str(round(currentTonnage/totalNeededResources*100,2))+"%" if currentTonnage > 0 else "No Cargo"
+    if currentTonnage <= 0:
+        percentPerTrip = "No Cargo"
+        trips = "No Cargo"
+    else:
+        trips = str(round((totalNeededResources-totalProvidedResources)/currentTonnage,1))
+        percentPerTrip = round(currentTonnage/totalNeededResources*100,2)
+        if trips <= str(0):
+            trips = "Complete!"
+        if percentPerTrip <= 0:
+            percentPerTrip = "Complete!"
+        else:
+            percentPerTrip = str(percentPerTrip)
+    if totalNeededResources-totalProvidedResources > 0:
+        stillNeeded = totalNeededResources-totalProvidedResources
+        stillNeeded = str(f"{stillNeeded:,}")
+    else:
+        stillNeeded = "Complete!"
+
     for t in resourceTable:
         tripsPerResource = str(round(int(t[2])/currentTonnage, 1)) if currentTonnage > 0 else "No Cargo"
         resourceType = resourceTypeDict[t[0]]
         newResourceTable.append((resourceType,) + t + (tripsPerResource,))
+    if totalNeededResources > 0:
+        totalNeededResources =str(f"{int(totalNeededResources):,}")
+    else:
+        totalNeededResources = "Complete!"
 
     printTable = copy.deepcopy(newResourceTable)
 
@@ -324,40 +342,34 @@ def populateTable(self, *args):
     tripsLabel = QLabel(trips)
     percentCompleteLabel = QLabel("Percent Complete:")
     percentCompleteValLabel = QLabel(percentComplete)
-    percentPerTripLable = QLabel("Percent per Trip:")
+    percentPerTripLabel = QLabel("Percent per Trip:")
     percentPerTripValLabel = QLabel(percentPerTrip)
     totalMaterialsLabel = QLabel("Total Materials:")
-    totalNeededResourcesCommas = QLabel(str(f"{int(totalNeededResources):,}"))
+    totalNeededResourcesCommas = QLabel(totalNeededResources)
     stillNeededLabel = QLabel("Still Needed")
-    if totalNeededResources-totalProvidedResources > 0:
-        print("Still need: ", totalNeededResources)
-        print("Still need: ", totalProvidedResources)
-        stillNeeded = int(totalNeededResources)-totalProvidedResources
-        stillNeeded = QLabel(str(f"{stillNeeded:,}"))
-    else:
-        stillNeeded = QLabel("Complete!")
+    stillNeededValLabel = QLabel(stillNeeded)
 
     tripsLeftLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
     tripsLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
     percentCompleteLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
     percentCompleteValLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
-    percentPerTripLable.setStyleSheet("color:snow; background-color: #151E3D;}")
+    percentPerTripLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
     percentPerTripValLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
     totalMaterialsLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
     totalNeededResourcesCommas.setStyleSheet("color:snow; background-color: #151E3D;}")
     stillNeededLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
-    stillNeeded.setStyleSheet("color:snow; background-color: #151E3D;}")
+    stillNeededValLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
 
     self.statsLayout.addWidget(tripsLeftLabel, 1, 0)
     self.statsLayout.addWidget(tripsLabel, 1, 1)
     self.statsLayout.addWidget(percentCompleteLabel, 1, 2)
     self.statsLayout.addWidget(percentCompleteValLabel, 1, 3)
-    self.statsLayout.addWidget(percentPerTripLable, 2, 0)
+    self.statsLayout.addWidget(percentPerTripLabel, 2, 0)
     self.statsLayout.addWidget(percentPerTripValLabel, 2, 1)
     self.statsLayout.addWidget(totalMaterialsLabel, 2, 2)
     self.statsLayout.addWidget(totalNeededResourcesCommas, 2, 3)
     self.statsLayout.addWidget(stillNeededLabel, 3, 2)
-    self.statsLayout.addWidget(stillNeeded, 3, 3)
+    self.statsLayout.addWidget(stillNeededValLabel, 3, 3)
 
     sortByResType = QPushButton("Category")
     sortByResName = QPushButton("Resource")
