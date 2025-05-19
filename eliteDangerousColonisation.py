@@ -253,7 +253,7 @@ def populateTable(self, *args):
     with open("allColonyLandings.txt", "r") as f:
         for line in f:
             testFileLine = ast.literal_eval(line)
-            if testFileLine["MarketID"] == projectID[0]:
+            if projectID and testFileLine["MarketID"] == projectID[0]:
                 resources = testFileLine["ResourcesRequired"]
                 print("resources: ",resources)
                 for i in range(len(resources)):
