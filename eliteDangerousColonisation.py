@@ -131,23 +131,24 @@ class MainWindow(QDialog):
 
         quitButton = QPushButton("Quit")
         
-        with open("settings.txt", "r") as f:
-            settingsFileLines = f.readlines()
-            for line in settingsFileLines:
-                print("Settings line: ", line)
-                if line.startswith("Load_time_selection:"):
-                    print("Found time in settings")
-                    self.loadDate.setCurrentIndex(int(line.split("Load_time_selection: ",1)[1].strip()))
-                if line.startswith("Hide_resources:"):
-                    print("Found checkbox in settings \'"+ line.split("Hide_resources: ",1)[1].strip()+"\'")
-                    if isinstance(int(line.split("Hide_resources: ",1)[1].strip()), int):
-                        hideBoxIsChecked = bool(int(line.split("Hide_resources: ",1)[1].strip()))
-                        self.hideFinished.setChecked(hideBoxIsChecked)
-                if line.startswith("Table_size:"):
-                    print("Found table size in settings")
-                    if isinstance(int(line.split("Table_size: ",1)[1].strip()), int):
-                        tableSizeIndex = int(line.split("Table_size: ",1)[1].strip())
-                        self.tableSize.setCurrentIndex(tableSizeIndex)
+        if os.path.exists("settings.txt"):
+            with open("settings.txt", "r") as f:
+                settingsFileLines = f.readlines()
+                for line in settingsFileLines:
+                    print("Settings line: ", line)
+                    if line.startswith("Load_time_selection:"):
+                        print("Found time in settings")
+                        self.loadDate.setCurrentIndex(int(line.split("Load_time_selection: ",1)[1].strip()))
+                    if line.startswith("Hide_resources:"):
+                        print("Found checkbox in settings \'"+ line.split("Hide_resources: ",1)[1].strip()+"\'")
+                        if isinstance(int(line.split("Hide_resources: ",1)[1].strip()), int):
+                            hideBoxIsChecked = bool(int(line.split("Hide_resources: ",1)[1].strip()))
+                            self.hideFinished.setChecked(hideBoxIsChecked)
+                    if line.startswith("Table_size:"):
+                        print("Found table size in settings")
+                        if isinstance(int(line.split("Table_size: ",1)[1].strip()), int):
+                            tableSizeIndex = int(line.split("Table_size: ",1)[1].strip())
+                            self.tableSize.setCurrentIndex(tableSizeIndex)
 
         self.dialogLayout.addWidget(folderLoad, 1, 0)
         self.dialogLayout.addWidget(loadDateText,2,0)
