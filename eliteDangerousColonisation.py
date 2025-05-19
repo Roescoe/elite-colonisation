@@ -94,9 +94,12 @@ class MainWindow(QDialog):
         lineEdits = []
         for x in range(5):
             lineEdit = QLineEdit()
+            lineEdit.setStyleSheet("color:snow; background-color: #151E3D;")
             lineEdit.setMaxLength(300)
             lineEdits.append(lineEdit)
-        self.dialogLayout.addWidget(QLabel("Logfile folder (usually under Saved Games):"))
+        fileLoadLabel = QLabel("Logfile folder (usually under Saved Games):")
+        fileLoadLabel.setStyleSheet("color:snow; background-color: #151E3D;")
+        self.dialogLayout.addWidget(fileLoadLabel)
         folderLoad = lineEdits[0]
         if os.path.exists("settings.txt"):
             with open("settings.txt", "r") as f:
@@ -132,11 +135,12 @@ class MainWindow(QDialog):
 
         quitButton = QPushButton("Quit")
 
+        loadDateText.setStyleSheet("color:snow; background-color: #151E3D;}")
         self.loadDate.setStyleSheet("color:snow; background-color: #151E3D;}")
         self.shipDropdown.setStyleSheet("color:snow; background-color: #151E3D;}")
         self.projectDropdown.setStyleSheet("color:snow; background-color: #151E3D;}")
         self.refreshProjectButton.setStyleSheet("color:snow; background-color: #151E3D;")
-        self.hideFinished.setStyleSheet("color:snow; background-color: #151E3D;border: 3px solid snow;")
+        self.hideFinished.setStyleSheet("color:snow; background-color: #151E3D; QCheckBox::indicator {background-color: snow; };")
         self.tableSize.setStyleSheet("color:snow; background-color: #151E3D;}")
         quitButton.setStyleSheet("color:snow; background-color: #151E3D;")
         
@@ -312,20 +316,40 @@ def populateTable(self, *args):
     else:
         self.needsToReverse[self.sortType] = True
 
-
-    self.statsLayout.addWidget(QLabel("Trips Left:"), 1, 0)
-    self.statsLayout.addWidget(QLabel(trips), 1, 1)
-    self.statsLayout.addWidget(QLabel("Percent Complete:"), 1, 2)
-    self.statsLayout.addWidget(QLabel(percentComplete), 1, 3)
-    self.statsLayout.addWidget(QLabel("Percent per Trip:"), 2, 0)
-    self.statsLayout.addWidget(QLabel(percentPerTrip), 2, 1)
-    self.statsLayout.addWidget(QLabel("Total Materials:"), 2, 2)
-    totalNeededResourcesCommas = f"{int(totalNeededResources):,}"
-    self.statsLayout.addWidget(QLabel(str(totalNeededResourcesCommas)), 2, 3)
-    self.statsLayout.addWidget(QLabel("Still Needed"), 3, 2)
+    tripsLeftLabel = QLabel("Trips Left:")
+    tripsLabel = QLabel(trips)
+    percentCompleteLabel = QLabel("Percent Complete:")
+    percentCompleteValLabel = QLabel(percentComplete)
+    percentPerTripLable = QLabel("Percent per Trip:")
+    percentPerTripValLabel = QLabel(percentPerTrip)
+    totalMaterialsLabel = QLabel("Total Materials:")
+    totalNeededResourcesCommas = QLabel(str(f"{int(totalNeededResources):,}"))
+    stillNeededLabel = QLabel("Still Needed")
     stillNeeded = int(totalNeededResources)-totalProvidedResources
-    stillNeeded = f"{stillNeeded:,}"
-    self.statsLayout.addWidget(QLabel(str(stillNeeded)), 3, 3)
+    stillNeeded = QLabel(str(f"{stillNeeded:,}"))
+
+    tripsLeftLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
+    tripsLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
+    percentCompleteLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
+    percentCompleteValLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
+    percentPerTripLable.setStyleSheet("color:snow; background-color: #151E3D;}")
+    percentPerTripValLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
+    totalMaterialsLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
+    totalNeededResourcesCommas.setStyleSheet("color:snow; background-color: #151E3D;}")
+    stillNeededLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
+    stillNeeded.setStyleSheet("color:snow; background-color: #151E3D;}")
+
+    self.statsLayout.addWidget(tripsLeftLabel, 1, 0)
+    self.statsLayout.addWidget(tripsLabel, 1, 1)
+    self.statsLayout.addWidget(percentCompleteLabel, 1, 2)
+    self.statsLayout.addWidget(percentCompleteValLabel, 1, 3)
+    self.statsLayout.addWidget(percentPerTripLable, 2, 0)
+    self.statsLayout.addWidget(percentPerTripValLabel, 2, 1)
+    self.statsLayout.addWidget(totalMaterialsLabel, 2, 2)
+    self.statsLayout.addWidget(totalNeededResourcesCommas, 2, 3)
+    self.statsLayout.addWidget(stillNeededLabel, 3, 2)
+    self.statsLayout.addWidget(stillNeeded, 3, 3)
+
     sortByResType = QPushButton("Category")
     sortByResName = QPushButton("Resource")
     sortByResTotal = QPushButton("Total Need")
