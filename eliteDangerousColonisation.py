@@ -106,24 +106,19 @@ class MainWindow(QDialog):
                     print("found default folder:", testFileLine.split("Folder_location: ",1)[1].strip())
         
         loadFolderButton = QPushButton()
-        loadFolderButton.setStyleSheet("background-color: #151E3D;")
+        loadFolderButton.setStyleSheet("color:snow; background-color: #151E3D;")
         loadFolderButton.setText("Load Folder")
         
         loadDateText = QLabel("Load no older than:")
         self.loadDate = QComboBox()
-        self.loadDate.setStyleSheet("background-color: #151E3D;}")
         self.loadDate.addItem("All")
         self.loadDate.setCurrentIndex(2)
         self.shipLabel = QLabel("Ship:")
         self.shipDropdown = QComboBox()
-        self.shipDropdown.setStyleSheet("background-color: #151E3D;}")
         self.projectDropdown = QComboBox()
-        self.projectDropdown.setStyleSheet("background-color: #151E3D;}")
         self.refreshProjectButton = QPushButton("Update")
-        self.refreshProjectButton.setStyleSheet("background-color: #151E3D;")
         self.hideFinished = QCheckBox("Hide Finished Resources")
         self.tableSize = QComboBox()
-        self.tableSize.setStyleSheet("background-color: #151E3D;}")
 
         self.loadDate.addItem("1 Day")
         self.loadDate.addItem("1 Week")
@@ -136,7 +131,14 @@ class MainWindow(QDialog):
         self.tableSize.setCurrentIndex(0)
 
         quitButton = QPushButton("Quit")
-        quitButton.setStyleSheet("background-color: #151E3D;")
+
+        self.loadDate.setStyleSheet("color:snow; background-color: #151E3D;}")
+        self.shipDropdown.setStyleSheet("color:snow; background-color: #151E3D;}")
+        self.projectDropdown.setStyleSheet("color:snow; background-color: #151E3D;}")
+        self.refreshProjectButton.setStyleSheet("color:snow; background-color: #151E3D;")
+        self.hideFinished.setStyleSheet("color:snow; background-color: #151E3D;border: QCheckBox::indicator { background-color: lightgreen; }")
+        self.tableSize.setStyleSheet("color:snow; background-color: #151E3D;}")
+        quitButton.setStyleSheet("color:snow; background-color: #151E3D;")
         
         if os.path.exists("settings.txt"):
             with open("settings.txt", "r") as f:
@@ -330,11 +332,11 @@ def populateTable(self, *args):
     sortByResNeed = QPushButton("Current Need")
     tripsRemaining = QLabel("Trips Remaining")
 
-    sortByResType.setStyleSheet("font-size: "+ str(fontSize) +"px;background-color: #151E3D;")
-    sortByResName.setStyleSheet("font-size: "+ str(fontSize) +"px;background-color: #151E3D;")
-    sortByResTotal.setStyleSheet("font-size: "+ str(fontSize) +"px;background-color: #151E3D;")
-    sortByResNeed.setStyleSheet("font-size: "+ str(fontSize) +"px;background-color: #151E3D;")
-    tripsRemaining.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+    sortByResType.setStyleSheet("font-size: "+ str(fontSize) +"px; background-color: #151E3D; color: snow;")
+    sortByResName.setStyleSheet("font-size: "+ str(fontSize) +"px; background-color: #151E3D; color: snow;")
+    sortByResTotal.setStyleSheet("font-size: "+ str(fontSize) +"px; background-color: #151E3D; color: snow;")
+    sortByResNeed.setStyleSheet("font-size: "+ str(fontSize) +"px; background-color: #151E3D; color: snow;")
+    tripsRemaining.setStyleSheet("font-size: "+ str(fontSize) +"px; color: snow;")
 
     self.resourceLayout.addWidget(sortByResType,startIndex - 2, 0)
     self.resourceLayout.addWidget(sortByResName,startIndex - 2, 1)
@@ -344,7 +346,7 @@ def populateTable(self, *args):
 
     for i,(resourceType, resourceName, resourceTotal, remaining, tripsPerResource) in enumerate(printTable):
         resourceTypeLabel = QLabel(resourceType)
-        resourceTypeLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+        resourceTypeLabel.setStyleSheet("font-size: "+ str(fontSize) +"px; color: snow;")
         self.resourceLayout.addWidget(resourceTypeLabel, i + startIndex + 1, 0)
         remainingLabel = QLabel()
         if (remaining == "0"):
@@ -354,11 +356,11 @@ def populateTable(self, *args):
         else:
             remainingLabel.setStyleSheet("color: snow; background-color: #c32148; font-size: "+ str(fontSize) +"px;")
         resourceNameLabel = QLabel(resourceName)
-        resourceNameLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+        resourceNameLabel.setStyleSheet("font-size: "+ str(fontSize) +"px; color: snow;")
         self.resourceLayout.addWidget(resourceNameLabel, i + startIndex + 1, 1)
         resourceTotal = f"{int(resourceTotal):,}"
         resourceTotalLabel = QLabel(resourceTotal)
-        resourceTotalLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+        resourceTotalLabel.setStyleSheet("font-size: "+ str(fontSize) +"px; color: snow;")
         resourceTotalLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.resourceLayout.addWidget(resourceTotalLabel, i + startIndex + 1, 2)
         remaining = f"{int(remaining):,}"
@@ -366,7 +368,7 @@ def populateTable(self, *args):
         remainingLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.resourceLayout.addWidget(remainingLabel, i + startIndex + 1, 3)
         tripsPerResourceLabel = QLabel(tripsPerResource)
-        tripsPerResourceLabel.setStyleSheet("font-size: "+ str(fontSize) +"px;")
+        tripsPerResourceLabel.setStyleSheet("font-size: "+ str(fontSize) +"px; color: snow;")
         tripsPerResourceLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.resourceLayout.addWidget(tripsPerResourceLabel, i + startIndex + 1, 4)
         
