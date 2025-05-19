@@ -214,8 +214,8 @@ def populateTable(self, *args):
     startIndex = 7
     projectID = -1
     totalProvidedResources = 0
-    totalNeededResources = 0
-    currentTonnage = 0
+    totalNeededResources = -1
+    currentTonnage = -1
     resourceTable = []
     newResourceTable = []
     HideFinishedResources = False
