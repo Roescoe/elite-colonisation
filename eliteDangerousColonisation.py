@@ -83,6 +83,14 @@ class MainWindow(QDialog):
         self.resourceLayout = QGridLayout()
         self.statsLayout = QGridLayout()
 
+        self.sortType = "Resource"
+        self.needsToReverse = {
+            "Type": False,
+            "Resource": False,
+            "Total": False,
+            "Need": False,
+            }
+
         lineEdits = []
         for x in range(5):
             lineEdit = QLineEdit()
@@ -123,24 +131,23 @@ class MainWindow(QDialog):
 
         quitButton = QPushButton("Quit")
         
-        if os.path.exists("settings.txt"):
-            with open("settings.txt", "r") as f:
-                settingsFileLines = f.readlines()
-                for line in settingsFileLines:
-                    print("Settings line: ", line)
-                    if line.startswith("Load_time_selection:"):
-                        print("Found time in settings")
-                        self.loadDate.setCurrentIndex(int(line.split("Load_time_selection: ",1)[1].strip()))
-                    if line.startswith("Hide_resources:"):
-                        print("Found checkbox in settings \'"+ line.split("Hide_resources: ",1)[1].strip()+"\'")
-                        if isinstance(int(line.split("Hide_resources: ",1)[1].strip()), int):
-                            hideBoxIsChecked = bool(int(line.split("Hide_resources: ",1)[1].strip()))
-                            self.hideFinished.setChecked(hideBoxIsChecked)
-                    if line.startswith("Table_size:"):
-                        print("Found table size in settings")
-                        if isinstance(int(line.split("Table_size: ",1)[1].strip()), int):
-                            tableSizeIndex = int(line.split("Table_size: ",1)[1].strip())
-                            self.tableSize.setCurrentIndex(tableSizeIndex)
+        with open("settings.txt", "r") as f:
+            settingsFileLines = f.readlines()
+            for line in settingsFileLines:
+                print("Settings line: ", line)
+                if line.startswith("Load_time_selection:"):
+                    print("Found time in settings")
+                    self.loadDate.setCurrentIndex(int(line.split("Load_time_selection: ",1)[1].strip()))
+                if line.startswith("Hide_resources:"):
+                    print("Found checkbox in settings \'"+ line.split("Hide_resources: ",1)[1].strip()+"\'")
+                    if isinstance(int(line.split("Hide_resources: ",1)[1].strip()), int):
+                        hideBoxIsChecked = bool(int(line.split("Hide_resources: ",1)[1].strip()))
+                        self.hideFinished.setChecked(hideBoxIsChecked)
+                if line.startswith("Table_size:"):
+                    print("Found table size in settings")
+                    if isinstance(int(line.split("Table_size: ",1)[1].strip()), int):
+                        tableSizeIndex = int(line.split("Table_size: ",1)[1].strip())
+                        self.tableSize.setCurrentIndex(tableSizeIndex)
 
         self.dialogLayout.addWidget(folderLoad, 1, 0)
         self.dialogLayout.addWidget(loadDateText,2,0)
@@ -197,9 +204,8 @@ def populateTable(self, *args):
     currentTonnage = 0
     resourceTable = []
     newResourceTable = []
-    sortType = "none"
     HideFinishedResources = False
-    mostRecentSort = "none"
+
 
 
     currentSelectedProjectName = self.projectDropdown.currentText()
@@ -265,8 +271,6 @@ def populateTable(self, *args):
         HideFinishedResources = args[1]
     if len(args) >= 3:
         self.tableSize.setCurrentIndex(args[2])
-    if len(args) >= 4:
-        mostRecentSort = args[3]
     match self.tableSize.currentIndex():
         case 0:
             fontSize = 12
@@ -281,20 +285,23 @@ def populateTable(self, *args):
         printTable = [p for p in printTable if "0" not in p]
 
     if len(args) >= 1:
-        sortType = args[0]
-    if sortType == "Type":
+        self.sortType = args[0]
+    if self.sortType == "Type":
         printTable.sort(key = lambda x: x[0])
-    if sortType == "Resource":
+    elif self.sortType == "Resource":
         printTable.sort(key = lambda x: x[1])
-    if sortType == "Total":    
-        printTable.sort(key = lambda y: (int(y[2]),y[1]))
-    if sortType == "Need": 
-        printTable.sort(key = lambda z: (int(z[3]),z[1]))
-    if sortType == "Trips":
-        printTable.sort(key = lambda z: (int(z[3]),z[1]))
-    if sortType == mostRecentSort:
-        printTable = printTable[::-1]
-        sortType = "none"
+    elif self.sortType == "Total":    
+        printTable.sort(key = lambda y: (int(y[2])))
+    elif self.sortType == "Need": 
+        printTable.sort(key = lambda z: (int(z[3])))
+    # elif self.sortType == "Trips":
+        # printTable.sort(key = lambda z: (int(z[3])))
+    if self.needsToReverse[self.sortType]:
+        printTable.reverse()
+        self.needsToReverse[self.sortType] = False
+    else:
+        self.needsToReverse[self.sortType] = True
+
 
     self.statsLayout.addWidget(QLabel("Trips Left:"), 1, 0)
     self.statsLayout.addWidget(QLabel(trips), 1, 1)
@@ -313,7 +320,7 @@ def populateTable(self, *args):
     sortByResName = QPushButton("Resource")
     sortByResTotal = QPushButton("Total Need")
     sortByResNeed = QPushButton("Current Need")
-    tripsRemaining = QPushButton("Trips Remaining")
+    tripsRemaining = QLabel("Trips Remaining")
 
     sortByResType.setStyleSheet("font-size: "+ str(fontSize) +"px;")
     sortByResName.setStyleSheet("font-size: "+ str(fontSize) +"px;")
@@ -357,11 +364,10 @@ def populateTable(self, *args):
     self.dialogLayout.addLayout(self.resourceLayout,8, 0, 1, 3)
     populated = True
 
-    sortByResType.clicked.connect(lambda: populateTable(self, "Type", self.hideFinished.isChecked(), self.tableSize.currentIndex(), sortType))
-    sortByResName.clicked.connect(lambda: populateTable(self, "Resource", self.hideFinished.isChecked(),self.tableSize.currentIndex(), sortType))
-    sortByResTotal.clicked.connect(lambda: populateTable(self, "Total", self.hideFinished.isChecked(), self.tableSize.currentIndex(), sortType))
-    sortByResNeed.clicked.connect(lambda: populateTable(self,"Need", self.hideFinished.isChecked(), self.tableSize.currentIndex(), sortType))
-    tripsRemaining.clicked.connect(lambda: populateTable(self,"Trips", self.hideFinished.isChecked(), self.tableSize.currentIndex(), sortType))
+    sortByResType.clicked.connect(lambda: populateTable(self, "Type", self.hideFinished.isChecked(), self.tableSize.currentIndex()))
+    sortByResName.clicked.connect(lambda: populateTable(self, "Resource", self.hideFinished.isChecked(),self.tableSize.currentIndex()))
+    sortByResTotal.clicked.connect(lambda: populateTable(self, "Total", self.hideFinished.isChecked(), self.tableSize.currentIndex()))
+    sortByResNeed.clicked.connect(lambda: populateTable(self,"Need", self.hideFinished.isChecked(), self.tableSize.currentIndex()))
 
 def quitNow(self, directory):
     with open("settings.txt", "w") as f:
@@ -423,7 +429,8 @@ def refreshUniqueEntries (self, eventList, uniqueId):
     with open("allColonyLandings.txt", "w") as f:
         f.write("\n".join(map(str, data.values())))
     print("******Lines in current logfile:*******", lineCount)
-    populateTable(self, "Resource", self.hideFinished.isChecked(), self.tableSize.currentIndex(),"Resource")
+    self.needsToReverse[self.sortType] = not self.needsToReverse[self.sortType]
+    populateTable(self, self.sortType, self.hideFinished.isChecked(), self.tableSize.currentIndex())
 
 def findShips():
     #"event":"Loadout"
