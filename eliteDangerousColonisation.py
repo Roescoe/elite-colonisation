@@ -323,7 +323,7 @@ def populateTable(self, *args):
     if self.sortType == "Type":
         printTable.sort(key = lambda x: x[0])
     elif self.sortType == "Resource":
-        printTable.sort(key = lambda x: x[1])
+        printTable.sort(key = lambda x: (x[1].lower(),x[1]))
     elif self.sortType == "Total":    
         printTable.sort(key = lambda y: (int(y[2])))
     elif self.sortType == "Need": 
