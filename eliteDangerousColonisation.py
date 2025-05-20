@@ -140,7 +140,7 @@ class MainWindow(QDialog):
         self.shipDropdown.setStyleSheet("color:snow; background-color: #151E3D;}")
         self.projectDropdown.setStyleSheet("color:snow; background-color: #151E3D;}")
         self.refreshProjectButton.setStyleSheet("color:snow; background-color: #151E3D;")
-        # self.hideFinished.setStyleSheet("color:snow; background-color: #151E3D; QCheckBox::indicator {background-color: snow; };")
+        self.hideFinished.setStyleSheet("color:snow; background-color: #151E3D; QCheckBox::indicator {background-color: snow; };")
         self.tableSize.setStyleSheet("color:snow; background-color: #151E3D;}")
         quitButton.setStyleSheet("color:snow; background-color: #151E3D;")
         
