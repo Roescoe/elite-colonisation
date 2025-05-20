@@ -281,7 +281,7 @@ def populateTable(self, *args):
         if percentPerTrip <= 0:
             percentPerTrip = "Complete!"
         else:
-            percentPerTrip = str(percentPerTrip)
+            percentPerTrip = str(percentPerTrip)+"%"
     if totalNeededResources-totalProvidedResources > 0:
         stillNeeded = totalNeededResources-totalProvidedResources
         stillNeeded = str(f"{stillNeeded:,}")
@@ -342,7 +342,7 @@ def populateTable(self, *args):
     percentPerTripValLabel = QLabel(percentPerTrip)
     totalMaterialsLabel = QLabel("Total Materials:")
     totalNeededResourcesCommas = QLabel(totalNeededResources)
-    stillNeededLabel = QLabel("Still Needed")
+    stillNeededLabel = QLabel("Still Needed:")
     stillNeededValLabel = QLabel(stillNeeded)
 
     tripsLeftLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
@@ -355,6 +355,12 @@ def populateTable(self, *args):
     totalNeededResourcesCommas.setStyleSheet("color:snow; background-color: #151E3D;}")
     stillNeededLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
     stillNeededValLabel.setStyleSheet("color:snow; background-color: #151E3D;}")
+
+    tripsLeftLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
+    percentCompleteLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
+    percentPerTripLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
+    totalMaterialsLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
+    stillNeededLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
 
     self.statsLayout.addWidget(tripsLeftLabel, 1, 0)
     self.statsLayout.addWidget(tripsLabel, 1, 1)
