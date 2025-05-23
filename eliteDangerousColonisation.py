@@ -30,7 +30,6 @@ def setUpLogfile(self, directory):
     folderdir = directory
     ext = ('.log')
     createTime = []
-    global logFileListSorted
     selectedTime = self.loadDate.currentIndex()
     olderThanNumDays = 0
     currentTime = time.time()
@@ -57,11 +56,11 @@ def setUpLogfile(self, directory):
                     logFileList.append(os.path.join(path, name))
                     createTime.append(os.path.getctime(os.path.join(path, name)))
     logFileListSortedPairs = sorted(zip(createTime,logFileList))
-    logFileListSorted = [x for _, x in logFileListSortedPairs]
-    logFileListSorted.sort(reverse = True)
+    self.logFileListSorted = [x for _, x in logFileListSortedPairs]
+    self.logFileListSorted.sort(reverse = True)
     print("files*: ",logFileList)
     print("times*: ",createTime)
-    print("sorts*: ",logFileListSorted)
+    print("sorts*: ",self.logFileListSorted)
     with open(os.path.join(folderdir, "Market.json"),"r", encoding='iso-8859-1') as f:
         testFileLine = json.load(f)
 
@@ -69,8 +68,6 @@ def setUpLogfile(self, directory):
         if "Name_Localised" in i and "Category_Localised" in i:
             resourceTypeDict[i["Name_Localised"]] = i["Category_Localised"]
     print("Every resource: ",resourceTypeDict)
-
-    return logFileListSorted
 
 class MainWindow(QDialog):
     def __init__(self):
@@ -90,6 +87,7 @@ class MainWindow(QDialog):
             "Total": False,
             "Need": False,
             }
+        self.logFileListSorted = []
 
         lineEdits = []
         for x in range(5):
@@ -178,8 +176,10 @@ class MainWindow(QDialog):
 
 def loadFile(self, directory):
     print("loading files")
-    logFileListSorted = setUpLogfile(self, directory)
-    data = findUniqueEntries(["ColonisationConstructionDepot"], "MarketID")
+    print("Logfiles?", self.logFileListSorted)
+    setUpLogfile(self, directory)
+    print("Logfiles SHOULD APPEAR HERE:", self.logFileListSorted)
+    data = findUniqueEntries(self, ["ColonisationConstructionDepot"], "MarketID")
     self.shipLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
 
     self.dialogLayout.addWidget(self.shipLabel, 4, 0)
@@ -188,7 +188,7 @@ def loadFile(self, directory):
     self.dialogLayout.addWidget(QLabel("Table Size:", alignment=Qt.AlignmentFlag.AlignRight), 6, 0)
     self.dialogLayout.addWidget(self.tableSize, 6, 1)
     ships = []
-    loadouts = findShips()
+    loadouts = findShips(self)
     for ship in loadouts:
         ships.append(str(ship) +": "+ str(loadouts[ship])+"T")
     print("loadouts:", loadouts)
@@ -443,8 +443,8 @@ def quitNow(self, directory):
         f.write(str(self.tableSize.currentIndex()))
     sys.exit()
 
-def findUniqueEntries (eventList, uniqueId):
-    for logfile in logFileListSorted:
+def findUniqueEntries (self, eventList, uniqueId):
+    for logfile in self.logFileListSorted:
         with open(logfile, "r", encoding='iso-8859-1') as f:
             for line in f:
                 rawLine = json.loads(line)
@@ -467,40 +467,41 @@ def findUniqueEntries (eventList, uniqueId):
     return data
 
 def refreshUniqueEntries (self, eventList, uniqueId):
-    logfile = logFileListSorted[0]
-    lineCount = 0
-    with open(logfile, "r", encoding='iso-8859-1') as f:
-        for line in f:
-            lineCount += 1
-            rawLine = json.loads(line)
-            if "MarketID" in rawLine and "StationName" in rawLine: 
-                uniqueStations[rawLine["MarketID"]] = rawLine["StationName"]
-            if any(event in line for event in eventList):
-                if(rawLine.get(uniqueId) not in uniqueIDs): #it's a new market ID we want
-                    print("ID is: ",rawLine.get(uniqueId))
-                    firstInstanceInFile[rawLine.get(uniqueId)] = str(logfile)
-                    uniqueIDs.append(rawLine.get(uniqueId))
-                    data[rawLine.get(uniqueId)] = rawLine
-                #only update if id and filename are still the same as first find
-                if(rawLine.get(uniqueId) in uniqueIDs and firstInstanceInFile[rawLine.get(uniqueId)] == str(logfile)):
-                    data[rawLine.get(uniqueId)] = rawLine
+    if self.logFileListSorted:
+        logfile = self.logFileListSorted[0]
+        lineCount = 0
+        with open(logfile, "r", encoding='iso-8859-1') as f:
+            for line in f:
+                lineCount += 1
+                rawLine = json.loads(line)
+                if "MarketID" in rawLine and "StationName" in rawLine: 
+                    uniqueStations[rawLine["MarketID"]] = rawLine["StationName"]
+                if any(event in line for event in eventList):
+                    if(rawLine.get(uniqueId) not in uniqueIDs): #it's a new market ID we want
+                        print("ID is: ",rawLine.get(uniqueId))
+                        firstInstanceInFile[rawLine.get(uniqueId)] = str(logfile)
+                        uniqueIDs.append(rawLine.get(uniqueId))
+                        data[rawLine.get(uniqueId)] = rawLine
+                    #only update if id and filename are still the same as first find
+                    if(rawLine.get(uniqueId) in uniqueIDs and firstInstanceInFile[rawLine.get(uniqueId)] == str(logfile)):
+                        data[rawLine.get(uniqueId)] = rawLine
 
-    for key in list(uniqueStations.keys()):
-        if key not in uniqueIDs:
-            del uniqueStations[key]
-    with open("allColonyLandings.txt", "w") as f:
-        f.write("\n".join(map(str, data.values())))
-    print("******Lines in current logfile:*******", lineCount)
-    self.needsToReverse[self.sortType] = not self.needsToReverse[self.sortType]
-    populateTable(self, self.sortType, self.hideFinished.isChecked(), self.tableSize.currentIndex())
+        for key in list(uniqueStations.keys()):
+            if key not in uniqueIDs:
+                del uniqueStations[key]
+        with open("allColonyLandings.txt", "w") as f:
+            f.write("\n".join(map(str, data.values())))
+        print("******Lines in current logfile:*******", lineCount)
+        self.needsToReverse[self.sortType] = not self.needsToReverse[self.sortType]
+        populateTable(self, self.sortType, self.hideFinished.isChecked(), self.tableSize.currentIndex())
 
-def findShips():
+def findShips(self):
     #"event":"Loadout"
     print("Loading Ships")
     
     latestLoadout = {}
 
-    for logfile in logFileListSorted:
+    for logfile in self.logFileListSorted:
         with open(logfile, "r", encoding='iso-8859-1') as f:
             for line in f:
                 rawLine = json.loads(line)
