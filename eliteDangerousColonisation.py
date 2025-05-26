@@ -67,7 +67,7 @@ def setUpLogfile(self, directory):
     for i in testFileLine["Items"]:
         if "Name_Localised" in i and "Category_Localised" in i:
             resourceTypeDict[i["Name_Localised"]] = i["Category_Localised"]
-    print("Every resource: ",resourceTypeDict)
+    # print("Every resource: ",resourceTypeDict)
 
 class MainWindow(QDialog):
     def __init__(self):
@@ -88,6 +88,8 @@ class MainWindow(QDialog):
             "Need": False,
             }
         self.logFileListSorted = []
+        self.uniqueIDs = []
+        self.firstInstanceInFile = {}# {marketID:logfile} dictionary
 
         lineEdits = []
         for x in range(5):
@@ -170,7 +172,7 @@ class MainWindow(QDialog):
         self.setLayout(self.dialogLayout)
         
         loadFolderButton.clicked.connect(lambda: loadFile(self, lineEdits[0].text()))
-        self.refreshProjectButton.clicked.connect(lambda: refreshUniqueEntries(self, ["ColonisationConstructionDepot"], "MarketID"))
+        self.refreshProjectButton.clicked.connect(lambda: refreshUniqueEntries(self, "ColonisationConstructionDepot", "MarketID"))
         
         quitButton.clicked.connect(lambda: quitNow(self, lineEdits[0].text()))
 
@@ -179,7 +181,7 @@ def loadFile(self, directory):
     print("Logfiles?", self.logFileListSorted)
     setUpLogfile(self, directory)
     print("Logfiles SHOULD APPEAR HERE:", self.logFileListSorted)
-    data = findUniqueEntries(self, ["ColonisationConstructionDepot"], "MarketID")
+    data = findUniqueEntries(self, "ColonisationConstructionDepot", "MarketID")
     self.shipLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
 
     self.dialogLayout.addWidget(self.shipLabel, 4, 0)
@@ -255,12 +257,8 @@ def populateTable(self, *args):
             testFileLine = ast.literal_eval(line)
             if projectID and testFileLine["MarketID"] == projectID[0]:
                 resources = testFileLine["ResourcesRequired"]
-                print("resources: ",resources)
+                # print("resources: ",resources)
                 for i in range(len(resources)):
-                    print("from file:", resources[i])
-                    print("resource: ", resources[i]["Name_Localised"])
-                    print("resource amount: ", resources[i]["RequiredAmount"])
-                    print("resource provided: ", resources[i]["ProvidedAmount"])
                     resourceLabel = resources[i]["Name_Localised"]
                     resourceAmount = str(resources[i]["RequiredAmount"])
                     remainingLabel = str(resources[i]["RequiredAmount"]-resources[i]["ProvidedAmount"]) 
@@ -443,30 +441,38 @@ def quitNow(self, directory):
         f.write(str(self.tableSize.currentIndex()))
     sys.exit()
 
-def findUniqueEntries (self, eventList, uniqueId):
+def findUniqueEntries (self, event, uniqueId):
+    print("Loading...")
+    self.firstInstanceInFile.clear() # {marketID:logfile} dictionary
     for logfile in self.logFileListSorted:
         with open(logfile, "r", encoding='iso-8859-1') as f:
             for line in f:
                 rawLine = json.loads(line)
                 if "MarketID" in rawLine and "StationName" in rawLine: 
                     uniqueStations[rawLine["MarketID"]] = rawLine["StationName"]
-                if any(event in line for event in eventList):
-                    if(rawLine.get(uniqueId) not in uniqueIDs): #it's a new market ID we want
-                        firstInstanceInFile[rawLine.get(uniqueId)] = str(logfile)
-                        uniqueIDs.append(rawLine.get(uniqueId))
+                if event in line:
+                    if(rawLine.get(uniqueId) not in self.uniqueIDs): #it's a new market ID we want
+                        self.firstInstanceInFile[rawLine.get(uniqueId)] = str(logfile)
+                        print("Load with Logfile: "+ str(logfile))
+                        self.uniqueIDs.append(rawLine.get(uniqueId))
                         data[rawLine.get(uniqueId)] = rawLine
                     #only update if id and filename are still the same as first find
-                    if(rawLine.get(uniqueId) in uniqueIDs and firstInstanceInFile[rawLine.get(uniqueId)] == str(logfile)):
-                        data[rawLine.get(uniqueId)] = rawLine
+                    if(rawLine.get(uniqueId) in self.uniqueIDs):
+                        if(self.firstInstanceInFile):
+                            # print("Logfile associated with: "+ str(logfile) + "File: "+ str(firstInstanceInFile[rawLine.get(uniqueId)]))
+                            if(self.firstInstanceInFile[rawLine.get(uniqueId)] == str(logfile)):
+                                data[rawLine.get(uniqueId)] = rawLine
 
     for key in list(uniqueStations.keys()):
-        if key not in uniqueIDs:
+        if key not in self.uniqueIDs:
             del uniqueStations[key]
-    print("ids: ", uniqueIDs)
+    print("ids: ", self.uniqueIDs)
     print("Stations: ", uniqueStations.keys())
     return data
 
-def refreshUniqueEntries (self, eventList, uniqueId):
+def refreshUniqueEntries (self, event, uniqueId):
+    # firstInstanceInFile = {} # {marketID:logfile} dictionary
+    print("Updating...")
     if self.logFileListSorted:
         logfile = self.logFileListSorted[0]
         lineCount = 0
@@ -476,18 +482,22 @@ def refreshUniqueEntries (self, eventList, uniqueId):
                 rawLine = json.loads(line)
                 if "MarketID" in rawLine and "StationName" in rawLine: 
                     uniqueStations[rawLine["MarketID"]] = rawLine["StationName"]
-                if any(event in line for event in eventList):
-                    if(rawLine.get(uniqueId) not in uniqueIDs): #it's a new market ID we want
+                    print("found station: ", rawLine["StationName"])
+                if event in line:
+                    if(rawLine.get(uniqueId) not in self.uniqueIDs): #it's a new market ID we want
                         print("ID is: ",rawLine.get(uniqueId))
-                        firstInstanceInFile[rawLine.get(uniqueId)] = str(logfile)
-                        uniqueIDs.append(rawLine.get(uniqueId))
+                        self.firstInstanceInFile[rawLine.get(uniqueId)] = str(logfile)
+                        print("Upate with Logfile: "+ str(logfile))
+                        self.uniqueIDs.append(rawLine.get(uniqueId))
                         data[rawLine.get(uniqueId)] = rawLine
                     #only update if id and filename are still the same as first find
-                    if(rawLine.get(uniqueId) in uniqueIDs and firstInstanceInFile[rawLine.get(uniqueId)] == str(logfile)):
-                        data[rawLine.get(uniqueId)] = rawLine
+                    if(rawLine.get(uniqueId) in self.uniqueIDs):
+                        if(self.firstInstanceInFile):
+                            if(self.firstInstanceInFile[rawLine.get(uniqueId)] == str(logfile)):
+                                data[rawLine.get(uniqueId)] = rawLine
 
         for key in list(uniqueStations.keys()):
-            if key not in uniqueIDs:
+            if key not in self.uniqueIDs:
                 del uniqueStations[key]
         with open("allColonyLandings.txt", "w") as f:
             f.write("\n".join(map(str, data.values())))
@@ -517,10 +527,10 @@ if __name__ == '__main__':
     resourceTypeDict = {}
     loadouts = {}
     data = {}
-    firstInstanceInFile = {} # {marketID:logfile} dictionary
+    
     logFileList = []
     uniqueStations = {}
-    uniqueIDs = []
+    
     app = QApplication(sys.argv)
     window = MainWindow()
     window.setStyleSheet("background-color: black;")
