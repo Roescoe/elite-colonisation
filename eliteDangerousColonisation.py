@@ -33,6 +33,7 @@ def setUpLogfile(self, directory):
     selectedTime = self.loadDate.currentIndex()
     olderThanNumDays = 0
     currentTime = time.time()
+    logFileList = []
 
     match selectedTime:
         case 0:
@@ -66,8 +67,9 @@ def setUpLogfile(self, directory):
 
     for i in testFileLine["Items"]:
         if "Name_Localised" in i and "Category_Localised" in i:
-            resourceTypeDict[i["Name_Localised"]] = i["Category_Localised"]
-    # print("Every resource: ",resourceTypeDict)
+            self.resourceTypeDict[i["Name_Localised"]] = i["Category_Localised"]
+    self.latestLogFile.setText("Latest logfile: "+self.logFileListSorted[0].split("Journal.",1)[1].split(".log",1)[0])
+    # print("Every resource: ",self.resourceTypeDict)
 
 class MainWindow(QDialog):
     def __init__(self):
@@ -90,6 +92,10 @@ class MainWindow(QDialog):
         self.logFileListSorted = []
         self.uniqueIDs = []
         self.firstInstanceInFile = {}# {marketID:logfile} dictionary
+        self.uniqueStations = {}
+        self.data = {}
+        self.resourceTypeDict = {}
+        self.loadouts = {}
 
         lineEdits = []
         for x in range(5):
@@ -116,10 +122,11 @@ class MainWindow(QDialog):
         self.loadDate = QComboBox()
         self.loadDate.addItem("All")
         self.loadDate.setCurrentIndex(2)
-        self.shipLabel = QLabel("Ship:")
-        self.shipDropdown = QComboBox()
         self.projectDropdown = QComboBox()
         self.refreshProjectButton = QPushButton("Update")
+        self.shipLabel = QLabel("Ship:")
+        self.shipDropdown = QComboBox()
+        self.latestLogFile = QLabel()
         self.hideFinished = QCheckBox("Hide Finished Resources")
         self.tableSize = QComboBox()
 
@@ -135,11 +142,14 @@ class MainWindow(QDialog):
 
         quitButton = QPushButton("Quit")
 
-        loadDateText.setStyleSheet("color:snow; background-color: #151E3D;}")
+        loadDateText.setStyleSheet("color:snow;}")
+        loadDateText.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.latestLogFile.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.loadDate.setStyleSheet("color:snow; background-color: #151E3D;}")
-        self.shipDropdown.setStyleSheet("color:snow; background-color: #151E3D;}")
         self.projectDropdown.setStyleSheet("color:snow; background-color: #151E3D;}")
         self.refreshProjectButton.setStyleSheet("color:snow; background-color: #151E3D;")
+        self.shipDropdown.setStyleSheet("color:snow; background-color: #151E3D;}")
+        self.latestLogFile.setStyleSheet("color:snow;}")
         self.hideFinished.setStyleSheet("color:snow; background-color: #151E3D; QCheckBox::indicator {background-color: snow; };")
         self.tableSize.setStyleSheet("color:snow; background-color: #151E3D;}")
         quitButton.setStyleSheet("color:snow; background-color: #151E3D;")
@@ -177,35 +187,37 @@ class MainWindow(QDialog):
         quitButton.clicked.connect(lambda: quitNow(self, lineEdits[0].text()))
 
 def loadFile(self, directory):
+    self.uniqueStations.clear() #rebuild dict
     print("loading files")
     print("Logfiles?", self.logFileListSorted)
     setUpLogfile(self, directory)
     print("Logfiles SHOULD APPEAR HERE:", self.logFileListSorted)
-    data = findUniqueEntries(self, "ColonisationConstructionDepot", "MarketID")
+    findUniqueEntries(self, "ColonisationConstructionDepot", "MarketID")
     self.shipLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
 
     self.dialogLayout.addWidget(self.shipLabel, 4, 0)
     self.dialogLayout.addWidget(self.shipDropdown, 4, 1)
+    self.dialogLayout.addWidget(self.latestLogFile, 5, 0)
     self.dialogLayout.addWidget(self.hideFinished,5, 1)
     self.dialogLayout.addWidget(QLabel("Table Size:", alignment=Qt.AlignmentFlag.AlignRight), 6, 0)
     self.dialogLayout.addWidget(self.tableSize, 6, 1)
     ships = []
-    loadouts = findShips(self)
-    for ship in loadouts:
-        ships.append(str(ship) +": "+ str(loadouts[ship])+"T")
-    print("loadouts:", loadouts)
-    print("Type:", type(loadouts))
+    findShips(self)
+    for ship in self.loadouts:
+        ships.append(str(ship) +": "+ str(self.loadouts[ship])+"T")
+    print("loadouts:", self.loadouts)
+    print("Type:", type(self.loadouts))
     print("Ships:", ships)
     self.shipDropdown.clear()
     self.shipDropdown.addItems(ships)
 
     with open("allColonyLandings.txt", "w") as f:
-        f.write("\n".join(map(str, data.values())))
+        f.write("\n".join(map(str, self.data.values())))
 
-    print("Number of Stations: ",len(data))
-    print("values: ",uniqueStations.values())
+    print("Number of Stations: ",len(self.data))
+    print("values: ",self.uniqueStations.values())
     self.projectDropdown.clear()
-    self.projectDropdown.addItems(uniqueStations.values())
+    self.projectDropdown.addItems(self.uniqueStations.values())
     self.dialogLayout.addWidget(self.projectDropdown, 3, 0)
     self.dialogLayout.addWidget(self.refreshProjectButton, 3, 1)
     self.setLayout(self.dialogLayout)
@@ -226,7 +238,7 @@ def populateTable(self, *args):
 
     currentSelectedProjectName = self.projectDropdown.currentText()
     
-    projectID = [key for key, val in uniqueStations.items() if val == currentSelectedProjectName]
+    projectID = [key for key, val in self.uniqueStations.items() if val == currentSelectedProjectName]
     print("project ID: ", projectID)
     print("project name: ", self.projectDropdown.currentText())
     
@@ -288,7 +300,7 @@ def populateTable(self, *args):
 
     for t in resourceTable:
         tripsPerResource = str(round(int(t[2])/currentTonnage, 1)) if currentTonnage > 0 else "No Cargo"
-        resourceType = resourceTypeDict[t[0]]
+        resourceType = self.resourceTypeDict[t[0]]
         newResourceTable.append((resourceType,) + t + (tripsPerResource,))
     if totalNeededResources > 0:
         totalNeededResources =str(f"{int(totalNeededResources):,}")
@@ -448,27 +460,26 @@ def findUniqueEntries (self, event, uniqueId):
         with open(logfile, "r", encoding='iso-8859-1') as f:
             for line in f:
                 rawLine = json.loads(line)
-                if "MarketID" in rawLine and "StationName" in rawLine: 
-                    uniqueStations[rawLine["MarketID"]] = rawLine["StationName"]
+                if "MarketID" in rawLine and "StationName" in rawLine:
+                    self.uniqueStations[rawLine["MarketID"]] = rawLine["StationName"]
                 if event in line:
                     if(rawLine.get(uniqueId) not in self.uniqueIDs): #it's a new market ID we want
                         self.firstInstanceInFile[rawLine.get(uniqueId)] = str(logfile)
                         print("Load with Logfile: "+ str(logfile))
                         self.uniqueIDs.append(rawLine.get(uniqueId))
-                        data[rawLine.get(uniqueId)] = rawLine
+                        self.data[rawLine.get(uniqueId)] = rawLine
                     #only update if id and filename are still the same as first find
                     if(rawLine.get(uniqueId) in self.uniqueIDs):
-                        if(self.firstInstanceInFile):
+                        if(rawLine.get(uniqueId) in self.firstInstanceInFile):
                             # print("Logfile associated with: "+ str(logfile) + "File: "+ str(firstInstanceInFile[rawLine.get(uniqueId)]))
                             if(self.firstInstanceInFile[rawLine.get(uniqueId)] == str(logfile)):
-                                data[rawLine.get(uniqueId)] = rawLine
+                                self.data[rawLine.get(uniqueId)] = rawLine
 
-    for key in list(uniqueStations.keys()):
+    for key in list(self.uniqueStations.keys()):
         if key not in self.uniqueIDs:
-            del uniqueStations[key]
+            del self.uniqueStations[key]
     print("ids: ", self.uniqueIDs)
-    print("Stations: ", uniqueStations.keys())
-    return data
+    print("Stations: ", self.uniqueStations.keys())
 
 def refreshUniqueEntries (self, event, uniqueId):
     # firstInstanceInFile = {} # {marketID:logfile} dictionary
@@ -481,26 +492,28 @@ def refreshUniqueEntries (self, event, uniqueId):
                 lineCount += 1
                 rawLine = json.loads(line)
                 if "MarketID" in rawLine and "StationName" in rawLine: 
-                    uniqueStations[rawLine["MarketID"]] = rawLine["StationName"]
+                    self.uniqueStations[rawLine["MarketID"]] = rawLine["StationName"]
                     print("found station: ", rawLine["StationName"])
                 if event in line:
+                    print("Found landing ",lineCount)
                     if(rawLine.get(uniqueId) not in self.uniqueIDs): #it's a new market ID we want
                         print("ID is: ",rawLine.get(uniqueId))
                         self.firstInstanceInFile[rawLine.get(uniqueId)] = str(logfile)
                         print("Upate with Logfile: "+ str(logfile))
                         self.uniqueIDs.append(rawLine.get(uniqueId))
-                        data[rawLine.get(uniqueId)] = rawLine
+                        self.data[rawLine.get(uniqueId)] = rawLine
                     #only update if id and filename are still the same as first find
                     if(rawLine.get(uniqueId) in self.uniqueIDs):
-                        if(self.firstInstanceInFile):
+                        if(rawLine.get(uniqueId) in self.firstInstanceInFile):
                             if(self.firstInstanceInFile[rawLine.get(uniqueId)] == str(logfile)):
-                                data[rawLine.get(uniqueId)] = rawLine
+                                print("getting latest version")
+                                self.data[rawLine.get(uniqueId)] = rawLine
 
-        for key in list(uniqueStations.keys()):
+        for key in list(self.uniqueStations.keys()):
             if key not in self.uniqueIDs:
-                del uniqueStations[key]
+                del self.uniqueStations[key]
         with open("allColonyLandings.txt", "w") as f:
-            f.write("\n".join(map(str, data.values())))
+            f.write("\n".join(map(str, self.data.values())))
         print("******Lines in current logfile:*******", lineCount)
         self.needsToReverse[self.sortType] = not self.needsToReverse[self.sortType]
         populateTable(self, self.sortType, self.hideFinished.isChecked(), self.tableSize.currentIndex())
@@ -518,19 +531,11 @@ def findShips(self):
                 if "ShipIdent" in rawLine and "CargoCapacity" in rawLine: 
                     if rawLine["ShipIdent"] not in latestLoadout:
                         latestLoadout[rawLine["ShipIdent"]] = logfile
-                        loadouts[rawLine["ShipIdent"]] = rawLine["CargoCapacity"]
+                        self.loadouts[rawLine["ShipIdent"]] = rawLine["CargoCapacity"]
                     if rawLine["ShipIdent"] in latestLoadout and logfile == latestLoadout[rawLine["ShipIdent"]]:
-                        loadouts[rawLine["ShipIdent"]] = rawLine["CargoCapacity"]
-    return loadouts
+                        self.loadouts[rawLine["ShipIdent"]] = rawLine["CargoCapacity"]
 
 if __name__ == '__main__':
-    resourceTypeDict = {}
-    loadouts = {}
-    data = {}
-    
-    logFileList = []
-    uniqueStations = {}
-    
     app = QApplication(sys.argv)
     window = MainWindow()
     window.setStyleSheet("background-color: black;")
