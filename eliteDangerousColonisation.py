@@ -187,7 +187,9 @@ class MainWindow(QDialog):
         quitButton.clicked.connect(lambda: quitNow(self, lineEdits[0].text()))
 
 def loadFile(self, directory):
-    self.uniqueStations.clear() #rebuild dict
+    #rebuild dicts
+    self.uniqueStations.clear() 
+    self.data.clear() 
     print("loading files")
     print("Logfiles?", self.logFileListSorted)
     setUpLogfile(self, directory)
@@ -279,6 +281,9 @@ def populateTable(self, *args):
                     resourceTable.append(resourceTuple)
                     totalProvidedResources += resources[i]["ProvidedAmount"]
                     totalNeededResources += resources[i]["RequiredAmount"]
+    if totalProvidedResources == -1: #didn't find any resources provided
+        totalProvidedResources = 0
+
     percentComplete = str(round(totalProvidedResources/totalNeededResources*100,2))+"%"
     if currentTonnage <= 0:
         percentPerTrip = "No Cargo"
@@ -483,9 +488,10 @@ def findUniqueEntries (self, event, uniqueId):
 
 def refreshUniqueEntries (self, event, uniqueId):
     # firstInstanceInFile = {} # {marketID:logfile} dictionary
-    print("Updating...")
+    
     if self.logFileListSorted:
         logfile = self.logFileListSorted[0]
+        print("**Updating from: ", logfile.split("Journal.",1)[1])
         lineCount = 0
         with open(logfile, "r", encoding='iso-8859-1') as f:
             for line in f:
