@@ -5,6 +5,7 @@ import ast
 import time
 import re
 import copy
+import pickle
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import *
 
@@ -69,7 +70,7 @@ def setUpLogfile(self, directory):
         if "Name_Localised" in i and "Category_Localised" in i:
             self.resourceTypeDict[i["Name_Localised"]] = i["Category_Localised"]
     self.latestLogFile.setText("Latest logfile: "+self.logFileListSorted[0].split("Journal.",1)[1].split(".log",1)[0])
-    # print("Every resource: ",self.resourceTypeDict)
+    print("Every resource: ",self.resourceTypeDict)
 
 class MainWindow(QDialog):
     def __init__(self):
@@ -96,17 +97,15 @@ class MainWindow(QDialog):
         self.data = {}
         self.resourceTypeDict = {}
         self.loadouts = {}
+        self.notesBoxes = {}
+        self.notesLabels = {}
 
-        lineEdits = []
-        for x in range(5):
-            lineEdit = QLineEdit()
-            lineEdit.setStyleSheet("color:snow; background-color: #151E3D;")
-            lineEdit.setMaxLength(300)
-            lineEdits.append(lineEdit)
         fileLoadLabel = QLabel("Logfile folder (usually under Saved Games):")
         fileLoadLabel.setStyleSheet("color:snow; background-color: #151E3D;")
+        folderLoad = QLineEdit()
+        folderLoad.setMaxLength(300)
+        folderLoad.setStyleSheet("color:snow; background-color: #151E3D;")
         self.dialogLayout.addWidget(fileLoadLabel)
-        folderLoad = lineEdits[0]
         if os.path.exists("settings.txt"):
             with open("settings.txt", "r") as f:
                 testFileLine = f.readline()
@@ -128,6 +127,7 @@ class MainWindow(QDialog):
         self.shipDropdown = QComboBox()
         self.latestLogFile = QLabel()
         self.hideFinished = QCheckBox("Hide Finished Resources")
+        self.hideNotes = QCheckBox("Hide Notes")
         self.tableSize = QComboBox()
 
         self.loadDate.addItem("1 Day")
@@ -151,6 +151,7 @@ class MainWindow(QDialog):
         self.shipDropdown.setStyleSheet("color:snow; background-color: #151E3D;}")
         self.latestLogFile.setStyleSheet("color:snow;}")
         self.hideFinished.setStyleSheet("color:snow; background-color: #151E3D; QCheckBox::indicator {background-color: snow; };")
+        self.hideNotes.setStyleSheet("color:snow; background-color: #151E3D; QCheckBox::indicator {background-color: snow; };")
         self.tableSize.setStyleSheet("color:snow; background-color: #151E3D;}")
         quitButton.setStyleSheet("color:snow; background-color: #151E3D;")
         
@@ -167,6 +168,11 @@ class MainWindow(QDialog):
                         if isinstance(int(line.split("Hide_resources: ",1)[1].strip()), int):
                             hideBoxIsChecked = bool(int(line.split("Hide_resources: ",1)[1].strip()))
                             self.hideFinished.setChecked(hideBoxIsChecked)
+                    if line.startswith("Hide_notes:"):
+                        print("Found checkbox in settings \'"+ line.split("Hide_notes: ",1)[1].strip()+"\'")
+                        if isinstance(int(line.split("Hide_notes: ",1)[1].strip()), int):
+                            hideBoxIsChecked = bool(int(line.split("Hide_notes: ",1)[1].strip()))
+                            self.hideNotes.setChecked(hideBoxIsChecked)
                     if line.startswith("Table_size:"):
                         print("Found table size in settings")
                         if isinstance(int(line.split("Table_size: ",1)[1].strip()), int):
@@ -181,10 +187,10 @@ class MainWindow(QDialog):
         self.dialogLayout.addWidget(quitButton, 100, 1)
         self.setLayout(self.dialogLayout)
         
-        loadFolderButton.clicked.connect(lambda: loadFile(self, lineEdits[0].text()))
+        loadFolderButton.clicked.connect(lambda: loadFile(self, folderLoad.text()))
         self.refreshProjectButton.clicked.connect(lambda: refreshUniqueEntries(self, "ColonisationConstructionDepot", "MarketID"))
         
-        quitButton.clicked.connect(lambda: quitNow(self, lineEdits[0].text()))
+        quitButton.clicked.connect(lambda: quitNow(self, folderLoad.text()))
 
 def loadFile(self, directory):
     #rebuild dicts
@@ -201,6 +207,7 @@ def loadFile(self, directory):
     self.dialogLayout.addWidget(self.shipDropdown, 4, 1)
     self.dialogLayout.addWidget(self.latestLogFile, 5, 0)
     self.dialogLayout.addWidget(self.hideFinished,5, 1)
+    self.dialogLayout.addWidget(self.hideNotes,7, 1)
     self.dialogLayout.addWidget(QLabel("Table Size:", alignment=Qt.AlignmentFlag.AlignRight), 6, 0)
     self.dialogLayout.addWidget(self.tableSize, 6, 1)
     ships = []
@@ -244,7 +251,6 @@ def populateTable(self, *args):
     print("project ID: ", projectID)
     print("project name: ", self.projectDropdown.currentText())
     
-    
     # print("Populated: ",populated)
     if populated:
         while self.resourceLayout.count():
@@ -284,6 +290,7 @@ def populateTable(self, *args):
     if totalProvidedResources == -1: #didn't find any resources provided
         totalProvidedResources = 0
 
+    # Manage stats
     percentComplete = str(round(totalProvidedResources/totalNeededResources*100,2))+"%"
     if currentTonnage <= 0:
         percentPerTrip = "No Cargo"
@@ -349,6 +356,14 @@ def populateTable(self, *args):
     else:
         self.needsToReverse[self.sortType] = True
 
+    if os.path.exists("resourceNotes.txt") and os.path.getsize("resourceNotes.txt") > 0:
+        with open("resourceNotes.txt", "rb") as f:
+            notesFromFile = pickle.load(f)
+            print("The notes: ", notesFromFile)
+            for note in notesFromFile:
+                self.notesBoxes[note] = notesFromFile[note]
+    print("The resource table now: ", printTable)
+
     tripsLeftLabel = QLabel("Trips Left:")
     tripsLabel = QLabel(trips)
     percentCompleteLabel = QLabel("Percent Complete:")
@@ -393,18 +408,22 @@ def populateTable(self, *args):
     sortByResTotal = QPushButton("Total Need")
     sortByResNeed = QPushButton("Current Need")
     tripsRemaining = QLabel("Trips Remaining")
+    notesBoxesLabel = QLabel("Notes")
 
     sortByResType.setStyleSheet("font-size: "+ str(fontSize) +"px; background-color: #151E3D; color: snow;")
     sortByResName.setStyleSheet("font-size: "+ str(fontSize) +"px; background-color: #151E3D; color: snow;")
     sortByResTotal.setStyleSheet("font-size: "+ str(fontSize) +"px; background-color: #151E3D; color: snow;")
     sortByResNeed.setStyleSheet("font-size: "+ str(fontSize) +"px; background-color: #151E3D; color: snow;")
     tripsRemaining.setStyleSheet("font-size: "+ str(fontSize) +"px; color: snow;")
+    notesBoxesLabel.setStyleSheet("font-size: "+ str(fontSize) +"px; color: snow;")
 
     self.resourceLayout.addWidget(sortByResType,startIndex - 2, 0)
     self.resourceLayout.addWidget(sortByResName,startIndex - 2, 1)
     self.resourceLayout.addWidget(sortByResTotal,startIndex - 2, 2)
     self.resourceLayout.addWidget(sortByResNeed,startIndex - 2, 3)
     self.resourceLayout.addWidget(tripsRemaining, startIndex - 2, 4)
+    if not self.hideNotes.isChecked():
+        self.resourceLayout.addWidget(notesBoxesLabel, startIndex - 2, 5)
 
     for i,(resourceType, resourceName, resourceTotal, remaining, tripsPerResource) in enumerate(printTable):
         resourceTypeLabel = QLabel(resourceType)
@@ -436,9 +455,19 @@ def populateTable(self, *args):
         tripsPerResourceLabel.setStyleSheet("font-size: "+ str(fontSize) +"px; color: snow;")
         tripsPerResourceLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.resourceLayout.addWidget(tripsPerResourceLabel, i + startIndex + 1, 4)
+        if not self.hideNotes.isChecked():
+            if resourceName in self.notesBoxes:
+                self.notesLabels[resourceName] = QLineEdit(self.notesBoxes[resourceName])
+            else:
+                self.notesLabels[resourceName] = QLineEdit()
+            self.notesLabels[resourceName].setStyleSheet("color: snow; background-color: #281E5D;")
+            self.resourceLayout.addWidget(self.notesLabels[resourceName], i + startIndex + 1, 5)
         
-    self.dialogLayout.addLayout(self.statsLayout,7, 0, 1, 3)
-    self.dialogLayout.addLayout(self.resourceLayout,8, 0, 1, 3)
+    self.dialogLayout.addLayout(self.statsLayout,8, 0, 1, 3)
+    self.dialogLayout.addLayout(self.resourceLayout,9, 0, 1, 3)
+
+
+    
     populated = True
 
     sortByResType.clicked.connect(lambda: populateTable(self, "Type", self.hideFinished.isChecked(), self.tableSize.currentIndex()))
@@ -452,6 +481,8 @@ def quitNow(self, directory):
         f.write(directory)
         f.write("\nHide_resources: ")
         f.write(str(int(self.hideFinished.isChecked())))
+        f.write("\nHide_notes: ")
+        f.write(str(int(self.hideNotes.isChecked())))
         f.write("\nLoad_time_selection: ")
         f.write(str(self.loadDate.currentIndex()))
         f.write("\nTable_size: ")
@@ -520,6 +551,14 @@ def refreshUniqueEntries (self, event, uniqueId):
                 del self.uniqueStations[key]
         with open("allColonyLandings.txt", "w") as f:
             f.write("\n".join(map(str, self.data.values())))
+        with open("resourceNotes.txt", "wb") as f:
+            try:
+                for i in self.notesLabels:
+                    self.notesBoxes[i] =  self.notesLabels[i].text()
+                    print("Found in notes:"+i+": "+self.notesBoxes[i])    
+                pickle.dump(self.notesBoxes, f, protocol=2)
+            except: 
+                pass
         print("******Lines in current logfile:*******", lineCount)
         self.needsToReverse[self.sortType] = not self.needsToReverse[self.sortType]
         populateTable(self, self.sortType, self.hideFinished.isChecked(), self.tableSize.currentIndex())
