@@ -63,7 +63,7 @@ def setUpLogfile(self, directory):
     print("files*: ",logFileList)
     print("times*: ",createTime)
     print("sorts*: ",self.logFileListSorted)
-    with open(os.path.join(folderdir, "Market.json"),"r", encoding='iso-8859-1') as f:
+    with open("Market.json", "r", encoding='iso-8859-1') as f:
         testFileLine = json.load(f)
 
     for i in testFileLine["Items"]:
@@ -403,7 +403,7 @@ def populateTable(self, *args):
     sortByResTotal = QPushButton("Total Need")
     sortByResNeed = QPushButton("Current Need")
     tripsRemaining = QLabel("Trips Remaining")
-    notesBoxesLabel = QLabel("Notes")
+    notesBoxesLabel = QLabel("Notes (press Update to save)")
 
     sortByResType.setStyleSheet("font-size: "+ str(fontSize) +"px; background-color: #151E3D; color: snow;")
     sortByResName.setStyleSheet("font-size: "+ str(fontSize) +"px; background-color: #151E3D; color: snow;")
@@ -411,6 +411,7 @@ def populateTable(self, *args):
     sortByResNeed.setStyleSheet("font-size: "+ str(fontSize) +"px; background-color: #151E3D; color: snow;")
     tripsRemaining.setStyleSheet("font-size: "+ str(fontSize) +"px; color: snow;")
     notesBoxesLabel.setStyleSheet("font-size: "+ str(fontSize) +"px; color: snow;")
+    notesBoxesLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
     self.resourceLayout.addWidget(sortByResType,startIndex - 2, 0)
     self.resourceLayout.addWidget(sortByResName,startIndex - 2, 1)
@@ -518,12 +519,12 @@ def findUniqueEntries (self, event, uniqueId):
         with open("resourceNotes.txt", "rb") as f:
             notesFromFile = pickle.load(f)
             print("The notes: ", notesFromFile)
-    for marketID in notesFromFile:
-        print("First open note: ",marketID)
-        for note in notesFromFile[marketID]:
-            print("Found note " + note +" in pickle file")
-            self.notesBoxes[marketID] = notesFromFile[marketID]
-            self.notesBoxes[marketID][note] = notesFromFile[marketID][note]
+        for marketID in notesFromFile:
+            print("First open note: ",marketID)
+            for note in notesFromFile[marketID]:
+                print("Found note " + note +" in pickle file")
+                self.notesBoxes[marketID] = notesFromFile[marketID]
+                self.notesBoxes[marketID][note] = notesFromFile[marketID][note]
 
     for key in list(self.uniqueStations.keys()):
         if key not in self.uniqueIDs:
