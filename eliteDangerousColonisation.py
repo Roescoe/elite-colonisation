@@ -99,6 +99,7 @@ class MainWindow(QDialog):
         self.loadouts = {}
         self.notesBoxes = {}
         self.notesLabels = {}
+        self.projectID = -1
 
         fileLoadLabel = QLabel("Logfile folder (usually under Saved Games):")
         fileLoadLabel.setStyleSheet("color:snow; background-color: #151E3D;")
@@ -235,7 +236,6 @@ def populateTable(self, *args):
     global populated
     print("Populating table:")
     startIndex = 7
-    projectID = -1
     totalProvidedResources = -1
     totalNeededResources = -1
     currentTonnage = -1
@@ -247,8 +247,8 @@ def populateTable(self, *args):
 
     currentSelectedProjectName = self.projectDropdown.currentText()
     
-    projectID = [key for key, val in self.uniqueStations.items() if val == currentSelectedProjectName]
-    print("project ID: ", projectID)
+    self.projectID = [key for key, val in self.uniqueStations.items() if val == currentSelectedProjectName][0]
+    print("project ID: ", self.projectID)
     print("project name: ", self.projectDropdown.currentText())
     
     # print("Populated: ",populated)
@@ -275,7 +275,7 @@ def populateTable(self, *args):
     with open("allColonyLandings.txt", "r") as f:
         for line in f:
             testFileLine = ast.literal_eval(line)
-            if projectID and testFileLine["MarketID"] == projectID[0]:
+            if self.projectID and testFileLine["MarketID"] == self.projectID:
                 resources = testFileLine["ResourcesRequired"]
                 # print("resources: ",resources)
                 for i in range(len(resources)):
@@ -356,12 +356,7 @@ def populateTable(self, *args):
     else:
         self.needsToReverse[self.sortType] = True
 
-    if os.path.exists("resourceNotes.txt") and os.path.getsize("resourceNotes.txt") > 0:
-        with open("resourceNotes.txt", "rb") as f:
-            notesFromFile = pickle.load(f)
-            print("The notes: ", notesFromFile)
-            for note in notesFromFile:
-                self.notesBoxes[note] = notesFromFile[note]
+    self.notesLabels.clear()
     print("The resource table now: ", printTable)
 
     tripsLeftLabel = QLabel("Trips Left:")
@@ -455,10 +450,18 @@ def populateTable(self, *args):
         tripsPerResourceLabel.setStyleSheet("font-size: "+ str(fontSize) +"px; color: snow;")
         tripsPerResourceLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.resourceLayout.addWidget(tripsPerResourceLabel, i + startIndex + 1, 4)
+
+        print("Boooxes: ", self.notesBoxes)
         if not self.hideNotes.isChecked():
-            if resourceName in self.notesBoxes:
-                self.notesLabels[resourceName] = QLineEdit(self.notesBoxes[resourceName])
+            if self.notesBoxes and self.projectID in self.notesBoxes:
+                print("loading previous notes: ", self.notesBoxes)
+                if resourceName in self.notesBoxes[self.projectID]:
+                    print("found resource: ",resourceName)
+                    self.notesLabels[resourceName] = QLineEdit(self.notesBoxes[self.projectID][resourceName])
+                else:
+                    self.notesLabels[resourceName] = QLineEdit()
             else:
+                print("adding resource: ",resourceName)
                 self.notesLabels[resourceName] = QLineEdit()
             self.notesLabels[resourceName].setStyleSheet("color: snow; background-color: #281E5D;")
             self.resourceLayout.addWidget(self.notesLabels[resourceName], i + startIndex + 1, 5)
@@ -511,6 +514,17 @@ def findUniqueEntries (self, event, uniqueId):
                             if(self.firstInstanceInFile[rawLine.get(uniqueId)] == str(logfile)):
                                 self.data[rawLine.get(uniqueId)] = rawLine
 
+    if os.path.exists("resourceNotes.txt") and os.path.getsize("resourceNotes.txt") > 0:
+        with open("resourceNotes.txt", "rb") as f:
+            notesFromFile = pickle.load(f)
+            print("The notes: ", notesFromFile)
+    for marketID in notesFromFile:
+        print("First open note: ",marketID)
+        for note in notesFromFile[marketID]:
+            print("Found note " + note +" in pickle file")
+            self.notesBoxes[marketID] = notesFromFile[marketID]
+            self.notesBoxes[marketID][note] = notesFromFile[marketID][note]
+
     for key in list(self.uniqueStations.keys()):
         if key not in self.uniqueIDs:
             del self.uniqueStations[key]
@@ -518,7 +532,7 @@ def findUniqueEntries (self, event, uniqueId):
     print("Stations: ", self.uniqueStations.keys())
 
 def refreshUniqueEntries (self, event, uniqueId):
-    # firstInstanceInFile = {} # {marketID:logfile} dictionary
+    notesFromFile = {}
     
     if self.logFileListSorted:
         logfile = self.logFileListSorted[0]
@@ -551,14 +565,26 @@ def refreshUniqueEntries (self, event, uniqueId):
                 del self.uniqueStations[key]
         with open("allColonyLandings.txt", "w") as f:
             f.write("\n".join(map(str, self.data.values())))
+        if os.path.exists("resourceNotes.txt") and os.path.getsize("resourceNotes.txt") > 0:
+            with open("resourceNotes.txt", "rb") as f:
+                notesFromFile = pickle.load(f)
+                print("The notes: ", notesFromFile)
+
+        # create current project notes
+        if self.notesLabels:
+            if self.projectID not in self.notesBoxes:
+                self.notesBoxes[self.projectID] = {}
+            for note in self.notesLabels:
+                print("Looping through note: "+ note+ ": " +self.notesLabels[note].text())
+                if self.notesLabels[note].text() != "":
+                    print("notes entered in now: ", self.notesLabels[note].text())
+                    self.notesBoxes[self.projectID][note] = self.notesLabels[note].text()
+                else:
+                    print("nothing entered in note currently")
+                    self.notesBoxes[self.projectID][note] = ""
+        print("printing to file: ",self.notesBoxes)
         with open("resourceNotes.txt", "wb") as f:
-            try:
-                for i in self.notesLabels:
-                    self.notesBoxes[i] =  self.notesLabels[i].text()
-                    print("Found in notes:"+i+": "+self.notesBoxes[i])    
-                pickle.dump(self.notesBoxes, f, protocol=2)
-            except: 
-                pass
+            pickle.dump(self.notesBoxes, f, protocol=2)
         print("******Lines in current logfile:*******", lineCount)
         self.needsToReverse[self.sortType] = not self.needsToReverse[self.sortType]
         populateTable(self, self.sortType, self.hideFinished.isChecked(), self.tableSize.currentIndex())
