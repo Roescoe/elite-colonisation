@@ -148,7 +148,7 @@ class MainWindow(QDialog):
         self.latestLogFile.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.loadDate.setStyleSheet("color:snow; background-color: #151E3D;}")
         self.projectDropdown.setStyleSheet("color:snow; background-color: #151E3D;}")
-        self.refreshProjectButton.setStyleSheet("color:snow; background-color: #151E3D;")
+        self.refreshProjectButton.setStyleSheet("font-size: 17px;color:snow; background-color: #7c0a02;")
         self.shipDropdown.setStyleSheet("color:snow; background-color: #151E3D;}")
         self.latestLogFile.setStyleSheet("color:snow;}")
         self.hideFinished.setStyleSheet("color:snow; background-color: #151E3D; QCheckBox::indicator {background-color: snow; };")
