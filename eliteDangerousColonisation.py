@@ -465,7 +465,7 @@ def populateTable(self, *args):
             else:
                 print("adding resource: ",resourceName)
                 self.notesLabels[resourceName] = QLineEdit()
-            self.notesLabels[resourceName].setStyleSheet("color: snow; background-color: #281E5D;")
+            self.notesLabels[resourceName].setStyleSheet("color: snow; background-color: #281E5D; font-size: "+ str(fontSize) +"px;")
             self.resourceLayout.addWidget(self.notesLabels[resourceName], i + startIndex + 1, 5)
         
     self.dialogLayout.addLayout(self.statsLayout,8, 0, 1, 3)
