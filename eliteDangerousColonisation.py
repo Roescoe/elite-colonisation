@@ -38,15 +38,15 @@ def setUpLogfile(self, directory):
 
     match selectedTime:
         case 0:
-            olderThanNumDays = currentTime - 3600*24*1
-        case 1:
-            olderThanNumDays = currentTime - 3600*24*7
-        case 2:
-            olderThanNumDays = currentTime - 3600*24*30
-        case 3:
-            olderThanNumDays = currentTime - 3600*24*100
-        case 4:
             olderThanNumDays = 0
+        case 1:
+            olderThanNumDays = currentTime - 3600*24*1
+        case 2:
+            olderThanNumDays = currentTime - 3600*24*7
+        case 3:
+            olderThanNumDays = currentTime - 3600*24*30
+        case 4:
+            olderThanNumDays = currentTime - 3600*24*100
         case _:
             olderThanNumDays = 0
 
@@ -120,7 +120,6 @@ class MainWindow(QDialog):
         
         loadDateText = QLabel("Load no older than:")
         self.loadDate = QComboBox()
-        self.loadDate.addItem("All")
         self.loadDate.setCurrentIndex(2)
         self.projectDropdown = QComboBox()
         self.refreshProjectButton = QPushButton("Update")
@@ -131,6 +130,7 @@ class MainWindow(QDialog):
         self.hideNotes = QCheckBox("Hide Notes")
         self.tableSize = QComboBox()
 
+        self.loadDate.addItem("All")
         self.loadDate.addItem("1 Day")
         self.loadDate.addItem("1 Week")
         self.loadDate.addItem("1 Month")
@@ -247,7 +247,8 @@ def populateTable(self, *args):
 
     currentSelectedProjectName = self.projectDropdown.currentText()
     
-    self.projectID = [key for key, val in self.uniqueStations.items() if val == currentSelectedProjectName][0]
+    if self.uniqueStations.items():
+        self.projectID = [key for key, val in self.uniqueStations.items() if val == currentSelectedProjectName][0]
     print("project ID: ", self.projectID)
     print("project name: ", self.projectDropdown.currentText())
     
@@ -500,8 +501,11 @@ def findUniqueEntries (self, event, uniqueId):
         with open(logfile, "r", encoding='iso-8859-1') as f:
             for line in f:
                 rawLine = json.loads(line)
-                if "MarketID" in rawLine and "StationName" in rawLine:
+                if "MarketID" in rawLine and "StationName" in rawLine and not rawLine["StationName"].startswith("$EXT_PANEL_"):
                     self.uniqueStations[rawLine["MarketID"]] = rawLine["StationName"]
+                elif "StationName" in rawLine and rawLine["StationName"].startswith("$EXT_PANEL_") and "StarSystem" in rawLine:
+                    print("Found: "+rawLine["StarSystem"] + " and "+ rawLine["StationName"].split("$EXT_PANEL_",1)[1]+ " in "+logfile.split("Journal.",1)[1])
+                    self.uniqueStations[rawLine["MarketID"]] = rawLine["StarSystem"] + ": " + rawLine["StationName"].split("$EXT_PANEL_",1)[1]
                 if event in line:
                     if(rawLine.get(uniqueId) not in self.uniqueIDs): #it's a new market ID we want
                         self.firstInstanceInFile[rawLine.get(uniqueId)] = str(logfile)
@@ -543,9 +547,11 @@ def refreshUniqueEntries (self, event, uniqueId):
             for line in f:
                 lineCount += 1
                 rawLine = json.loads(line)
-                if "MarketID" in rawLine and "StationName" in rawLine: 
+                if "MarketID" in rawLine and "StationName" in rawLine and not rawLine["StationName"].startswith("$EXT_PANEL_"):
                     self.uniqueStations[rawLine["MarketID"]] = rawLine["StationName"]
                     print("found station: ", rawLine["StationName"])
+                elif "StationName" in rawLine and rawLine["StationName"].startswith("$EXT_PANEL_") and "StarSystem" in rawLine:
+                    self.uniqueStations[rawLine["MarketID"]] = rawLine["StarSystem"] + ": " + rawLine["StationName"].split("$EXT_PANEL_",1)[1]
                 if event in line:
                     print("Found landing ",lineCount)
                     if(rawLine.get(uniqueId) not in self.uniqueIDs): #it's a new market ID we want
