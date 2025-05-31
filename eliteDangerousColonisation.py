@@ -27,8 +27,8 @@ from PyQt6.QtWidgets import *
 
 populated = False
 
-def setUpLogfile(self, directory):
-    folderdir = directory
+def setUpLogfile(self):
+    folderdir = self.folderLoad.text()
     ext = ('.log')
     createTime = []
     selectedTime = self.loadDate.currentIndex()
@@ -103,15 +103,15 @@ class MainWindow(QDialog):
 
         fileLoadLabel = QLabel("Logfile folder (usually under Saved Games):")
         fileLoadLabel.setStyleSheet("color:snow; background-color: #151E3D;")
-        folderLoad = QLineEdit()
-        folderLoad.setMaxLength(300)
-        folderLoad.setStyleSheet("color:snow; background-color: #151E3D;")
+        self.folderLoad = QLineEdit()
+        self.folderLoad.setMaxLength(300)
+        self.folderLoad.setStyleSheet("color:snow; background-color: #151E3D;")
         self.dialogLayout.addWidget(fileLoadLabel)
         if os.path.exists("settings.txt"):
             with open("settings.txt", "r") as f:
                 testFileLine = f.readline()
                 if testFileLine.startswith("Folder_location:"):
-                    folderLoad.setText(testFileLine.split("Folder_location: ",1)[1].strip())
+                    self.folderLoad.setText(testFileLine.split("Folder_location: ",1)[1].strip())
                     print("found default folder:", testFileLine.split("Folder_location: ",1)[1].strip())
         
         loadFolderButton = QPushButton()
@@ -180,7 +180,7 @@ class MainWindow(QDialog):
                             tableSizeIndex = int(line.split("Table_size: ",1)[1].strip())
                             self.tableSize.setCurrentIndex(tableSizeIndex)
 
-        self.dialogLayout.addWidget(folderLoad, 1, 0)
+        self.dialogLayout.addWidget(self.folderLoad, 1, 0)
         self.dialogLayout.addWidget(loadDateText,2,0)
         self.dialogLayout.addWidget(self.loadDate,2,1)
         self.dialogLayout.addWidget(loadFolderButton, 1, 1)
@@ -188,18 +188,18 @@ class MainWindow(QDialog):
         self.dialogLayout.addWidget(quitButton, 100, 1)
         self.setLayout(self.dialogLayout)
         
-        loadFolderButton.clicked.connect(lambda: loadFile(self, folderLoad.text()))
+        loadFolderButton.clicked.connect(lambda: loadFile(self))
         self.refreshProjectButton.clicked.connect(lambda: refreshUniqueEntries(self, "ColonisationConstructionDepot", "MarketID"))
         
-        quitButton.clicked.connect(lambda: quitNow(self, folderLoad.text()))
+        quitButton.clicked.connect(lambda: quitNow(self))
 
-def loadFile(self, directory):
+def loadFile(self):
     #rebuild dicts
     self.uniqueStations.clear() 
     self.data.clear() 
     print("loading files")
     print("Logfiles?", self.logFileListSorted)
-    setUpLogfile(self, directory)
+    setUpLogfile(self)
     print("Logfiles SHOULD APPEAR HERE:", self.logFileListSorted)
     findUniqueEntries(self, "ColonisationConstructionDepot", "MarketID")
     self.shipLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
@@ -480,10 +480,10 @@ def populateTable(self, *args):
     sortByResTotal.clicked.connect(lambda: populateTable(self, "Total", self.hideFinished.isChecked(), self.tableSize.currentIndex()))
     sortByResNeed.clicked.connect(lambda: populateTable(self,"Need", self.hideFinished.isChecked(), self.tableSize.currentIndex()))
 
-def quitNow(self, directory):
+def quitNow(self):
     with open("settings.txt", "w") as f:
         f.write("Folder_location: ")
-        f.write(directory)
+        f.write(self.folderLoad.text())
         f.write("\nHide_resources: ")
         f.write(str(int(self.hideFinished.isChecked())))
         f.write("\nHide_notes: ")
