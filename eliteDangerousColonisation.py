@@ -114,9 +114,9 @@ class MainWindow(QDialog):
                     self.folderLoad.setText(testFileLine.split("Folder_location: ",1)[1].strip())
                     print("found default folder:", testFileLine.split("Folder_location: ",1)[1].strip())
         
-        loadFolderButton = QPushButton()
-        loadFolderButton.setStyleSheet("color:snow; background-color: #151E3D;")
-        loadFolderButton.setText("Load Folder")
+        self.loadFolderButton = QPushButton()
+        self.loadFolderButton.setStyleSheet("color:snow; background-color: #151E3D;")
+        self.loadFolderButton.setText("Load Folder")
         
         loadDateText = QLabel("Load no older than:")
         self.loadDate = QComboBox()
@@ -183,12 +183,12 @@ class MainWindow(QDialog):
         self.dialogLayout.addWidget(self.folderLoad, 1, 0)
         self.dialogLayout.addWidget(loadDateText,2,0)
         self.dialogLayout.addWidget(self.loadDate,2,1)
-        self.dialogLayout.addWidget(loadFolderButton, 1, 1)
+        self.dialogLayout.addWidget(self.loadFolderButton, 1, 1)
 
         self.dialogLayout.addWidget(quitButton, 100, 1)
         self.setLayout(self.dialogLayout)
         
-        loadFolderButton.clicked.connect(lambda: loadFile(self))
+        self.loadFolderButton.clicked.connect(lambda: loadFile(self))
         self.refreshProjectButton.clicked.connect(lambda: refreshUniqueEntries(self, "ColonisationConstructionDepot", "MarketID"))
         
         quitButton.clicked.connect(lambda: quitNow(self))
@@ -196,7 +196,8 @@ class MainWindow(QDialog):
 def loadFile(self):
     #rebuild dicts
     self.uniqueStations.clear() 
-    self.data.clear() 
+    self.data.clear()
+    self.uniqueIDs.clear()
     print("loading files")
     print("Logfiles?", self.logFileListSorted)
     setUpLogfile(self)
