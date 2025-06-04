@@ -214,8 +214,8 @@ def loadFile(self):
     self.dialogLayout.addWidget(self.tableSize, 6, 1)
     ships = []
     findShips(self)
-    for ship in self.loadouts:
-        ships.append(str(ship) +": "+ str(self.loadouts[ship])+"T")
+    for shipCargo in self.loadouts:
+        ships.append(str(self.loadouts[shipCargo][0])+", "+ str(self.loadouts[shipCargo][1]) +": "+ str(shipCargo)+"T")
     print("loadouts:", self.loadouts)
     print("Type:", type(self.loadouts))
     print("Ships:", ships)
@@ -607,12 +607,9 @@ def findShips(self):
         with open(logfile, "r", encoding='iso-8859-1') as f:
             for line in f:
                 rawLine = json.loads(line)
-                if "ShipIdent" in rawLine and "CargoCapacity" in rawLine: 
-                    if rawLine["ShipIdent"] not in latestLoadout:
-                        latestLoadout[rawLine["ShipIdent"]] = logfile
-                        self.loadouts[rawLine["ShipIdent"]] = rawLine["CargoCapacity"]
-                    if rawLine["ShipIdent"] in latestLoadout and logfile == latestLoadout[rawLine["ShipIdent"]]:
-                        self.loadouts[rawLine["ShipIdent"]] = rawLine["CargoCapacity"]
+                if "Ship" in rawLine and "CargoCapacity" in rawLine and "ShipIdent" in rawLine:
+                    self.loadouts[rawLine["CargoCapacity"]] = rawLine["Ship"], rawLine["ShipIdent"]
+                    print("Found new: ",rawLine["Ship"])
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
