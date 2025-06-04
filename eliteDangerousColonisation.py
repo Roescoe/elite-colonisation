@@ -3,7 +3,6 @@ import sys
 import json
 import ast
 import time
-import re
 import copy
 import pickle
 from PyQt6.QtCore import Qt
@@ -215,7 +214,7 @@ def loadFile(self):
     ships = []
     findShips(self)
     for shipCargo in self.loadouts:
-        ships.append(str(self.loadouts[shipCargo][0])+", "+ str(self.loadouts[shipCargo][1]) +": "+ str(shipCargo)+"T")
+        ships.append(str(self.loadouts[shipCargo][1]) +": "+ str(shipCargo)+"T" + " (" + str(self.loadouts[shipCargo][0]).capitalize()+ ")")
     print("loadouts:", self.loadouts)
     print("Type:", type(self.loadouts))
     print("Ships:", ships)
@@ -268,7 +267,7 @@ def populateTable(self, *args):
                 widget.deleteLater() 
             self.statsLayout.removeItem(item)
 
-    currentTonnage = int(self.shipDropdown.currentText().rsplit(" ",1)[1].split("T")[0])
+    currentTonnage = int(self.shipDropdown.currentText().split(" ",3)[1].split("T",1)[0])
 
     line = QFrame()
     line.setFrameShape(QFrame.Shape.HLine)
@@ -600,8 +599,6 @@ def refreshUniqueEntries (self, event, uniqueId):
 def findShips(self):
     #"event":"Loadout"
     print("Loading Ships")
-    
-    latestLoadout = {}
 
     for logfile in self.logFileListSorted:
         with open(logfile, "r", encoding='iso-8859-1') as f:
