@@ -68,7 +68,10 @@ def setUpLogfile(self):
     for i in testFileLine["Items"]:
         if "Name_Localised" in i and "Category_Localised" in i:
             self.resourceTypeDict[i["Name_Localised"]] = i["Category_Localised"]
-    self.latestLogFile.setText("Latest logfile: "+self.logFileListSorted[0].split("Journal.",1)[1].split(".log",1)[0])
+    if self.logFileListSorted:
+        self.latestLogFile.setText("Latest logfile: "+self.logFileListSorted[0].split("Journal.",1)[1].split(".log",1)[0])
+    else:
+        self.latestLogFile.setText("No logfiles in path. Either change directory or date range.")
     print("Every resource: ",self.resourceTypeDict)
 
 class MainWindow(QDialog):
