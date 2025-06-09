@@ -68,6 +68,8 @@ def setUpLogfile(self):
     for i in testFileLine["Items"]:
         if "Name_Localised" in i and "Category_Localised" in i:
             self.resourceTypeDict[i["Name_Localised"]] = i["Category_Localised"]
+        else:
+            self.resourceTypeDict[i["Name_Localised"]] = "UNKNOWN"
     if self.logFileListSorted:
         self.latestLogFile.setText("Latest logfile: "+self.logFileListSorted[0].split("Journal.",1)[1].split(".log",1)[0])
     else:
