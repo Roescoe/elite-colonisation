@@ -317,7 +317,7 @@ def populateTable(self, *args):
 
     for t in resourceTable:
         tripsPerResource = str(round(int(t[2])/currentTonnage, 1)) if currentTonnage > 0 else "No Cargo"
-        if resourceType in resourceTypeDict:
+        if t[0] in self.resourceTypeDict:
             resourceType = self.resourceTypeDict[t[0]]
         else:
             resourceType = "UNKNOWN"
