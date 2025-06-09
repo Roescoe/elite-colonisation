@@ -68,8 +68,7 @@ def setUpLogfile(self):
     for i in testFileLine["Items"]:
         if "Name_Localised" in i and "Category_Localised" in i:
             self.resourceTypeDict[i["Name_Localised"]] = i["Category_Localised"]
-        else:
-            self.resourceTypeDict[i["Name_Localised"]] = "UNKNOWN"
+
     if self.logFileListSorted:
         self.latestLogFile.setText("Latest logfile: "+self.logFileListSorted[0].split("Journal.",1)[1].split(".log",1)[0])
     else:
@@ -318,7 +317,10 @@ def populateTable(self, *args):
 
     for t in resourceTable:
         tripsPerResource = str(round(int(t[2])/currentTonnage, 1)) if currentTonnage > 0 else "No Cargo"
-        resourceType = self.resourceTypeDict[t[0]]
+        if resourceType in resourceTypeDict:
+            resourceType = self.resourceTypeDict[t[0]]
+        else:
+            resourceType = "UNKNOWN"
         newResourceTable.append((resourceType,) + t + (tripsPerResource,))
     if totalNeededResources > 0:
         totalNeededResources =str(f"{int(totalNeededResources):,}")
