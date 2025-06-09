@@ -252,7 +252,9 @@ def populateTable(self, *args):
     currentSelectedProjectName = self.projectDropdown.currentText()
     
     if self.uniqueStations.items():
-        self.projectID = [key for key, val in self.uniqueStations.items() if val == currentSelectedProjectName][0]
+        idOfProject = [key for key, val in self.uniqueStations.items() if val == currentSelectedProjectName]
+        if idOfProject:
+            self.projectID = idOfProject[0]
     print("project ID: ", self.projectID)
     print("project name: ", self.projectDropdown.currentText())
     
