@@ -547,7 +547,8 @@ def findUniqueEntries (self, event, uniqueId):
 
 def refreshUniqueEntries (self, event, uniqueId):
     notesFromFile = {}
-    
+    self.firstInstanceInFile.clear()
+
     if self.logFileListSorted:
         logfile = self.logFileListSorted[0]
         print("**Updating from: ", logfile.split("Journal.",1)[1])
