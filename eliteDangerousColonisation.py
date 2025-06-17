@@ -68,11 +68,7 @@ def setUpLogfile(self):
     for i in testFileLine["Items"]:
         if "Name_Localised" in i and "Category_Localised" in i:
             self.resourceTypeDict[i["Name_Localised"]] = i["Category_Localised"]
-
-    if self.logFileListSorted:
-        self.latestLogFile.setText("Latest logfile: "+self.logFileListSorted[0].split("Journal.",1)[1].split(".log",1)[0])
-    else:
-        self.latestLogFile.setText("No logfiles in path. Either change directory or date range.")
+        
     print("Every resource: ",self.resourceTypeDict)
 
 class MainWindow(QDialog):
@@ -231,7 +227,10 @@ def loadFile(self):
     print("Number of Stations: ",len(self.data))
     print("values: ",self.uniqueStations.values())
     self.projectDropdown.clear()
-    self.projectDropdown.addItems(self.uniqueStations.values())
+    stationDropStrings = []
+    for key in self.uniqueStations:
+        stationDropStrings.append(str(self.uniqueStations[key]) + " (" + str(key)+ ")")
+    self.projectDropdown.addItems(stationDropStrings)
     self.dialogLayout.addWidget(self.projectDropdown, 3, 0)
     self.dialogLayout.addWidget(self.refreshProjectButton, 3, 1)
     self.setLayout(self.dialogLayout)
@@ -248,13 +247,9 @@ def populateTable(self, *args):
     HideFinishedResources = False
 
 
+    if self.projectDropdown.currentText():
+        self.projectID = int(self.projectDropdown.currentText().split("(",1)[1].split(")",1)[0])
 
-    currentSelectedProjectName = self.projectDropdown.currentText()
-    
-    if self.uniqueStations.items():
-        idOfProject = [key for key, val in self.uniqueStations.items() if val == currentSelectedProjectName]
-        if idOfProject:
-            self.projectID = idOfProject[0]
     print("project ID: ", self.projectID)
     print("project name: ", self.projectDropdown.currentText())
     
@@ -480,8 +475,12 @@ def populateTable(self, *args):
     self.dialogLayout.addLayout(self.statsLayout,8, 0, 1, 3)
     self.dialogLayout.addLayout(self.resourceLayout,9, 0, 1, 3)
 
+    if self.logFileListSorted:
+        lastUpdateTime = time.strftime("%H:%M:%S", time.localtime())
+        self.latestLogFile.setText("Latest logfile: "+self.logFileListSorted[0].split("Journal.",1)[1].split(".log",1)[0] + ", Last update: " + lastUpdateTime)
+    else:
+        self.latestLogFile.setText("No logfiles in path. Either change directory or date range.")
 
-    
     populated = True
 
     sortByResType.clicked.connect(lambda: populateTable(self, "Type", self.hideFinished.isChecked(), self.tableSize.currentIndex()))
@@ -512,6 +511,7 @@ def findUniqueEntries (self, event, uniqueId):
                 rawLine = json.loads(line)
                 if "MarketID" in rawLine and "StationName" in rawLine and not rawLine["StationName"].startswith("$EXT_PANEL_"):
                     self.uniqueStations[rawLine["MarketID"]] = rawLine["StationName"]
+                    print("found station: ", rawLine["StationName"])
                 elif "StationName" in rawLine and rawLine["StationName"].startswith("$EXT_PANEL_") and "StarSystem" in rawLine:
                     print("Found: "+rawLine["StarSystem"] + " and "+ rawLine["StationName"].split("$EXT_PANEL_",1)[1]+ " in "+logfile.split("Journal.",1)[1])
                     self.uniqueStations[rawLine["MarketID"]] = rawLine["StarSystem"] + ": " + rawLine["StationName"].split("$EXT_PANEL_",1)[1]
