@@ -76,7 +76,7 @@ class MainWindow(QDialog):
         super().__init__()
         print("setting up window")
 
-        self.setWindowTitle("Roescoe's Elite Colonisation App")
+        self.setWindowTitle("CMDR Roescoe's Elite Colonisation App")
         self.setGeometry(100, 100, 1000, 100)
         self.dialogLayout = QGridLayout()
         self.resourceLayout = QGridLayout()
@@ -429,8 +429,10 @@ def populateTable(self, *args):
     for i,(resourceType, resourceName, resourceTotal, remaining, tripsPerResource) in enumerate(printTable):
         resourceTypeLabel = QLabel(resourceType)
         resourceTypeLabel.setStyleSheet("font-size: "+ str(fontSize) +"px; color: snow;")
+        resourceTypeLabel.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.resourceLayout.addWidget(resourceTypeLabel, i + startIndex + 1, 0)
         remainingLabel = QLabel()
+        remainingLabel.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         if (remaining == "0"):
             remainingLabel.setStyleSheet("color: snow; background-color: green; font-size: "+ str(fontSize) +"px;")
         elif(int(remaining) == int(resourceTotal)):
@@ -439,11 +441,13 @@ def populateTable(self, *args):
             remainingLabel.setStyleSheet("color: snow; background-color: #281E5D; font-size: "+ str(fontSize) +"px;")
         resourceNameLabel = QLabel(resourceName)
         resourceNameLabel.setStyleSheet("font-size: "+ str(fontSize) +"px; color: snow;")
+        resourceNameLabel.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.resourceLayout.addWidget(resourceNameLabel, i + startIndex + 1, 1)
         resourceTotal = f"{int(resourceTotal):,}"
         resourceTotalLabel = QLabel(resourceTotal)
         resourceTotalLabel.setStyleSheet("font-size: "+ str(fontSize) +"px; color: snow;")
         resourceTotalLabel.setAlignment(Qt.AlignmentFlag.AlignRight)
+        resourceTotalLabel.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.resourceLayout.addWidget(resourceTotalLabel, i + startIndex + 1, 2)
         if remaining == "0":
             remainingLabel.setText("None")
