@@ -279,6 +279,7 @@ def populateTable(self, *args):
             testFileLine = ast.literal_eval(line)
             if self.projectID and testFileLine["MarketID"] == self.projectID:
                 resources = testFileLine["ResourcesRequired"]
+                totalNeededResources = 0;
                 # print("resources: ",resources)
                 for i in range(len(resources)):
                     resourceLabel = resources[i]["Name_Localised"]
