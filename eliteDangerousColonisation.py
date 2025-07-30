@@ -135,6 +135,7 @@ class MainWindow(QDialog):
         self.loadDate.addItem("1 Month")
         self.loadDate.addItem("100 Days")
         self.tableSize.addItem("12pt")
+        self.tableSize.addItem("14pt")
         self.tableSize.addItem("16pt")
         self.tableSize.addItem("20pt")
         self.tableSize.addItem("32pt")
@@ -338,10 +339,12 @@ def populateTable(self, *args):
         case 0:
             fontSize = 12
         case 1:
-            fontSize = 16
+            fontSize = 14
         case 2:
-            fontSize = 20
+            fontSize = 16
         case 3:
+            fontSize = 20
+        case 4:
             fontSize = 32
     if HideFinishedResources:
         self.hideFinished.setChecked(True)
